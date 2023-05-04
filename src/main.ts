@@ -12,11 +12,9 @@ const compression = require('compression');
 async function bootstrap() {
   loadEnv();
   const app = await NestFactory.create(AppModule, {
-    // logger: logger,
     abortOnError: false,
     bufferLogs: true,
   });
-  // app.useLogger(logger);
   app.use(compression());
   app.enableCors();
   app.setGlobalPrefix('api/v1', {
@@ -27,7 +25,7 @@ async function bootstrap() {
       },
     ],
   });
-  app.use(new RequestLoggerMiddleware());
+  app.use(new RequestLoggerMiddleware().use);
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new TransformInterceptor());
   app.useGlobalPipes(new ValidationPipe());

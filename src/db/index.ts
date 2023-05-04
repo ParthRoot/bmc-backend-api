@@ -2,8 +2,8 @@ import "reflect-metadata";
 import * as path from 'path';
 import { DataSource, DataSourceOptions } from 'typeorm';
 import { getEnv, loadEnv } from "../utils";
-export const entityFolder = path.join(__dirname, '../entity/*.{ts,js}');
-export const migrationFolder = path.join(__dirname, '../migrations/**/*.{ts,js}');
+export const entityFolder = path.join(__dirname, './entity/*.{ts,js}');
+export const migrationFolder = path.join(__dirname, './migrations/**/*.{ts,js}');
 loadEnv();
 
 export const databaseConf = {
@@ -35,5 +35,4 @@ export const ormConfig: DataSourceOptions = {
     logging: 'all',
     logger: databaseConf.LOG_LEVEL() as any,
 };
-
 export const AppDataSource = new DataSource(ormConfig);

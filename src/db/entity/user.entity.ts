@@ -34,9 +34,6 @@ export class UserEntity {
     @Column({ type: 'boolean', default: true })
     is_active!: boolean;
 
-    @Column({ type: 'boolean', default: false })
-    is_verified!: boolean;
-
     @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     created_at!: Date;
 
@@ -58,10 +55,4 @@ export class UserEntity {
 
     @Column({ type: 'varchar', length: 300, nullable: true, default: null })
     avatar!: string;
-
-    @Column({ type: 'text', default: null })
-    social_id!: string | null;
-
-    @Column({ type: 'varchar', nullable: true })
-    device_token!: string;
 }
