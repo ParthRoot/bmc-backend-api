@@ -2,6 +2,10 @@
 /dist
 /node_modules
 
+
+
+
+
 # Logs
 logs
 *.log
@@ -36,6 +40,7 @@ lerna-debug.log*
 !.vscode/extensions.json
 
 .env
+.prettierrc
 !.env.development
 .pnpm-store
 tsconfig.build.tsbuildinfo

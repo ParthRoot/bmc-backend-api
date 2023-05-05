@@ -13,7 +13,7 @@ export class RequestLoggerMiddleware implements NestMiddleware {
         const contentLength = res.get('content-length');
         const perfEnd = performance.now() - perf;
 
-        console.log(
+        console.log(   
             `hostname=[${hostname}] method=${method} url='${originalUrl}' performance=${perfEnd} statusCode='${statusCode}'  contentLength='${contentLength}'  refer='${referer}' user_agenet='${userAgent}' ip='${ip}'`,
         );
     }

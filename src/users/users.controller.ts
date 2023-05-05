@@ -1,7 +1,18 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+/* eslint-disable prettier/prettier */
+import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters, HttpException } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { UserSignUpReqDto } from './common/dto/req/index';
+import { UserSignUpResDto } from './common/dto/res/index';
+import { ApiBody, ApiTags } from '@nestjs/swagger';
 
+@ApiTags("User")
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
-}
+
+  @Post('signUp')
+  @ApiBody({ type: UserSignUpReqDto, description: "signup successfully" })
+  async userSignUp(@Body() data: UserSignUpReqDto): Promise<UserSignUpResDto> {
+    return await this.usersService.userSignUp(data);
+  }
+};
