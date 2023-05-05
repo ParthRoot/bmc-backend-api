@@ -27,4 +27,5 @@ export class RoleAvailableEntity {
 
     @UpdateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     updated_at!: Date;
+  static role: any;
 }
