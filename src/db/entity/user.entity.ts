@@ -34,6 +34,9 @@ export class UserEntity {
     @Column({ type: 'boolean', default: true })
     is_active!: boolean;
 
+    @Column({ type: 'boolean', default: false })
+    is_verified!: boolean;
+
     @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     created_at!: Date;
 
