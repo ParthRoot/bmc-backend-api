@@ -1,11 +1,9 @@
 export class UsersLoginResDto {
-  status: boolean;
-  message: string;
   token?: string | undefined;
+  message : string;
 
-  constructor(status, message, token?: string | undefined) {
-    this.status = status;
-    this.message = message;
+  constructor(  token?: string | undefined, message?: string | undefined) {
     this.token = token;
+    this.message = message;
   }
 }
