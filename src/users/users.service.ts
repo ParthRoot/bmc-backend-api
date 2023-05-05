@@ -1,5 +1,4 @@
-/* eslint-disable prettier/prettier */
-import { Injectable } from '@nestjs/common';
+import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
 import { UserRepository, RoleRepository, RoleAvailableRepository } from 'src/db/repository';
 import { UserSignUpReqDto } from './common/dto/req';
 import { UserSignUpResDto } from './common/dto/res';
@@ -23,11 +22,11 @@ export class UsersService {
       const roleExists = await this.roleAvailableRepository.find({ where: { is_active: true, name: roleName } });
 
       if (userExists.length != 0) {
-        throw new Error('email is already exists');
+        throw new ConflictException(`email is already exists`);
       }
 
       if (roleExists.length === 0) {
-        throw new Error('NORMAL does not exists');
+        throw new NotFoundException(`${roleName} does not exists`);
       }
 
       //hash
@@ -42,9 +41,9 @@ export class UsersService {
       role.role = roleExists.find((o) => o.name == roleName);
       await this.roleRepository.save(role);
 
-      return new UserSignUpResDto("user register successfully");
+      return new UserSignUpResDto(`user register successfully`);
     } catch (error) {
-      throw new Error(`Could not signUp user ${error.message}`);
+      throw new HttpException(`Could not signUp user ${error.message}`, error.response.statusCode);
     }
   }
 }
