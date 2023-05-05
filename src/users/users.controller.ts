@@ -4,6 +4,7 @@ import { UsersService } from './users.service';
 import { UserSignUpReqDto } from './common/dto/req/index';
 import { UserSignUpResDto } from './common/dto/res/index';
 import { ApiBody, ApiTags } from '@nestjs/swagger';
+import { AvailableRoleEnum } from 'src/utils';
 
 @ApiTags("User")
 @Controller('users')
@@ -13,6 +14,6 @@ export class UsersController {
   @Post('signUp')
   @ApiBody({ type: UserSignUpReqDto, description: "signup successfully" })
   async userSignUp(@Body() data: UserSignUpReqDto): Promise<UserSignUpResDto> {
-    return await this.usersService.userSignUp(data);
+    return await this.usersService.userSignUp(data, AvailableRoleEnum.NORMAL);
   }
 };

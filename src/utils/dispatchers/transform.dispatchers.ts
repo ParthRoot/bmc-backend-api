@@ -15,7 +15,7 @@ export interface Response<T> {
  * Response transformer
  * Transforms object to valid json response
  */
-@Injectable()   
+@Injectable()
 export class TransformInterceptor<T> implements NestInterceptor<T, Response<T>> {
     intercept(_context: ExecutionContext, next: CallHandler): Observable<Response<T>> {
         return next.handle().pipe(

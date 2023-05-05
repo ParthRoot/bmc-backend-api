@@ -1,35 +1,50 @@
 /* eslint-disable prettier/prettier */
 import { Injectable } from '@nestjs/common';
-import { UserRepository } from 'src/db/repository';
-import { UserSignUpReqDto } from './common/dto/req/index';
-import { UserSignUpResDto } from './common/dto/res/index';
+import { UserRepository, RoleRepository, RoleAvailableRepository } from 'src/db/repository';
+import { UserSignUpReqDto } from './common/dto/req';
+import { UserSignUpResDto } from './common/dto/res';
 import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class UsersService {
 
-  constructor(private readonly userRepository: UserRepository) { }
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly roleRepository: RoleRepository,
+    private readonly roleAvailableRepository: RoleAvailableRepository
+  ) { }
 
-  async userSignUp(userSignUpReqDto: UserSignUpReqDto): Promise<UserSignUpResDto> {
+  async userSignUp(userSignUpReqDto: UserSignUpReqDto, roleName): Promise<UserSignUpResDto> {
     try {
-      console.log(userSignUpReqDto);
-
       const { email, name, password } = userSignUpReqDto;
 
-      const userExists = await this.userRepository.findOneBy({ email });
+      const userExists = await this.userRepository.find({ where: { email } });
 
-      if (userExists) {
-        throw new Error('User with that email is already exists');
+      const roleExists = await this.roleAvailableRepository.find({ where: { is_active: true, name: roleName } });
+
+      if (userExists.length != 0) {
+        throw new Error('email is already exists');
+      }
+
+      if (roleExists.length === 0) {
+        throw new Error('NORMAL does not exists');
       }
 
       //hash
       const salt = await bcrypt.genSalt();
-
       const password_hash = await bcrypt.hash(password, salt);
 
-      return new UserSignUpResDto(userSignUpReqDto, "User Register");
+      const user = this.userRepository.create({ email, name, password_hash });
+      const savedUser = await this.userRepository.save(user);
+
+      const role = await this.roleRepository.create();
+      role.user = savedUser;
+      role.role = roleExists.find((o) => o.name == roleName);
+      await this.roleRepository.save(role);
+
+      return new UserSignUpResDto("user register successfully");
     } catch (error) {
-      throw new Error(`Could not signUp User ${error.message}`);
+      throw new Error(`Could not signUp user ${error.message}`);
     }
   }
 }
