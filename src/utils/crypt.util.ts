@@ -74,6 +74,12 @@ export const jwtVerify = (token: string) => {
     });
 };
 
+export const jwtVerifyForEmailVerification = (token: string) => {
+    return jwt.verify(token, getEnv('JWT_EMAIL_VERIFICATION_SALT', 'secret'), {
+        algorithms: ['HS256'],
+    });
+};
+
 export const randomString = (length: number) => {
     let result = '';
     const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';

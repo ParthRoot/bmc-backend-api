@@ -1,8 +1,7 @@
-/* eslint-disable prettier/prettier */
 import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters, HttpException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UserSignUpReqDto } from './common/dto/req/index';
-import { UserSignUpResDto } from './common/dto/res/index';
+import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res/index';
 import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiTags } from '@nestjs/swagger';
 import { AvailableRoleEnum } from 'src/utils';
 
@@ -26,5 +25,10 @@ export class UsersController {
   })
   async userSignUp(@Body() data: UserSignUpReqDto): Promise<UserSignUpResDto> {
     return await this.usersService.userSignUp(data, AvailableRoleEnum.NORMAL);
+  }
+
+  @Get('verifyEmail:token')
+  async verifyEmail(@Param('token') token: string): Promise<VerifyUserResDto> {
+    return this.usersService.verifyEmail(token);
   }
 };

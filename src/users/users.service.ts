@@ -1,9 +1,9 @@
-import { ConflictException, HttpException, HttpStatus, Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { UserRepository, RoleRepository, RoleAvailableRepository, TokenRepository } from 'src/db/repository';
 import { UserSignUpReqDto } from './common/dto/req';
-import { UserSignUpResDto } from './common/dto/res';
+import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res';
 import * as bcrypt from 'bcryptjs';
-import { jwtSignForEmailVerification } from 'src/utils';
+import { jwtSignForEmailVerification, jwtVerifyForEmailVerification } from 'src/utils';
 import { TokenType } from 'src/db/entity';
 const moment = require('moment');
 
@@ -26,11 +26,11 @@ export class UsersService {
       const roleExists = await this.roleAvailableRepository.findOneBy({ is_active: true, name: roleName });
 
       if (userExists) {
-        throw new ConflictException(`email is already exists`);
+        throw new Error(`email is already exists`);
       }
 
       if (!roleExists) {
-        throw new NotFoundException(`${roleName} does not exists`);
+        throw new Error(`${roleName} does not exists`);
       }
 
       //hash
@@ -63,7 +63,35 @@ export class UsersService {
 
       return new UserSignUpResDto(`user register successfully`);
     } catch (error) {
-      throw new HttpException(`Could not signUp user ${error.message}`, error.response.statusCode);
+      throw new Error(`Could not signUp user ${error.message}`);
+    }
+  }
+
+  async verifyEmail(token): Promise<VerifyUserResDto> {
+    try {
+      const verifyToken = jwtVerifyForEmailVerification(token);
+
+      console.log(verifyToken);
+
+      //update is_Verified status
+      const userExists = await this.userRepository.findOneBy({ email: verifyToken.email });
+
+      if (!userExists) {
+        throw new Error('User not found');
+      }
+
+      if (userExists.is_verified) {
+        throw new Error("User is already verified");
+      }
+
+      userExists.is_verified = true;
+      await this.userRepository.update({ email: verifyToken.email }, userExists);
+
+      return new VerifyUserResDto(`User is verified successfully`);
+    } catch (error) {
+      throw new Error(`Could not signUp user ${error.message}`);
     }
   }
 }
+
+
