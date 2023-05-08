@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsOptional, IsObject } from 'class-validator';
+import { BaseResDto } from './base.res.dto';
 
 export class VerifyUserResDto {
     @ApiProperty({
@@ -8,9 +8,12 @@ export class VerifyUserResDto {
         type: 'string',
         required: true,
     })
-    message: string;
+    name: string;
 
-    constructor(message) {
-        this.message = message;
+    constructor(
+        data
+    ) {
+        this.name = data;
+
     }
 }
