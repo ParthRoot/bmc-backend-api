@@ -11,8 +11,11 @@ export class UsersLoginResDto {
 
   token?: string | undefined;
 
-  constructor(  token?: string | undefined) {
-    
-    this.token = token;
-  }
+ 
+  constructor(
+    data
+) {
+    this.token = data;
+
+}
 }

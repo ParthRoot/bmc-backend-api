@@ -3,6 +3,8 @@ import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
 import { ApiCreatedResponse, ApiNotFoundResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { UsersLoginResDto } from './common/dto/res';
+import { BaseResDto } from './common/dto/res/base.res.dto';
+import {message} from 'src/utils/message';
 
 @Controller('users')
 export class UsersController {
@@ -21,11 +23,8 @@ export class UsersController {
   @Post('login')
   async userLogin(
     @Body() userloginDto : UsersLoginReqDto
-  ): Promise<any> {
+  ): Promise<BaseResDto<UsersLoginResDto>> {
     const result = await this.usersService.loginUser(userloginDto)
-    return {
-      data: result,
-      message: 'successfully login'
-    }
+    return new BaseResDto(message.loginUser, result)
   }
 }
