@@ -18,21 +18,21 @@ export class UsersService {
       });
   
       if (!user) {
-        throw new HttpException('User not found', HttpStatus.NOT_FOUND);
+        throw new Error('User not found');
       }
   
       if (!user.is_verified) {
-        throw new HttpException('User is not verified', HttpStatus.CONFLICT);
+        throw new Error('User is not verified');
       }
   
       if (!user.is_active) {
-        throw new HttpException('User is not active, please contact admin', HttpStatus.CONFLICT);
+        throw new Error('User is not active, please contact admin');
       }
   
       const isPasswordValid = await bcrypt.compare(password, user.password_hash);
   
       if (!isPasswordValid) {
-        throw new HttpException('Please enter correct password', HttpStatus.UNAUTHORIZED);
+        throw new Error('Please enter correct password');
       }
   
       const data = { id: user.id, email: user.email , role: user.role[0].role.name };
@@ -41,7 +41,7 @@ export class UsersService {
       return new UsersLoginResDto(token);
     } catch (error) {
       console.error('An error occurred while logging in the user: ', error);
-      throw new HttpException(error.message, error.status);
+      throw new Error(error.message);
     }
   }
 }
