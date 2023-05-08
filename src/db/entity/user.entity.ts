@@ -8,7 +8,7 @@ import {
     UpdateDateColumn,
     DeleteDateColumn,
 } from 'typeorm';
-import { RoleEntity } from './index';
+import { RoleEntity, TokenEntity } from './index';
 
 @Entity('users')
 export class UserEntity {
@@ -30,6 +30,9 @@ export class UserEntity {
 
     @OneToMany(() => RoleEntity, (role) => role.user)
     role!: RoleEntity[];
+
+    @OneToMany(() => TokenEntity, (token) => token.user)
+    user!: TokenEntity[];
 
     @Column({ type: 'boolean', default: true })
     is_active!: boolean;
