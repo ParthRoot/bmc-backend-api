@@ -32,7 +32,7 @@ export class TokenEntity {
     @CreateDateColumn({ type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
     created_at!: Date;
 
-    @ManyToOne(() => UserEntity, (user) => user.id, { cascade: true })
+    @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     @JoinTable()
     user!: UserEntity;

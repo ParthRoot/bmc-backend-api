@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsNotEmpty, IsString, Matches } from 'class-validator';
 
 export class UserSignUpReqDto {
@@ -10,6 +11,7 @@ export class UserSignUpReqDto {
         required: true
     })
     @IsNotEmpty()
+    @Transform(({ value }) => value.toLowerCase())
     @IsEmail()
     email: string;
 

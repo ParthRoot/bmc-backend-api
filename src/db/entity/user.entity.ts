@@ -28,11 +28,15 @@ export class UserEntity {
     @Column({ type: 'varchar', length: 300, nullable: true })
     password_hash!: string;
 
-    @OneToMany(() => RoleEntity, (role) => role.user)
+    @OneToMany(() => RoleEntity, (role) => role.user, {
+        cascade: true
+    })
     role!: RoleEntity[];
 
-    @OneToMany(() => TokenEntity, (token) => token.user)
-    user!: TokenEntity[];
+    @OneToMany(() => TokenEntity, (token) => token.user, {
+        cascade: true
+    })
+    token!: TokenEntity[];
 
     @Column({ type: 'boolean', default: true })
     is_active!: boolean;
