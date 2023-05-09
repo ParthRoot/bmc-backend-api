@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersController } from './users.controller';
-import { UserRepository } from 'src/db/repository';
-import { JwtService } from '@nestjs/jwt';
+import { RoleAvailableRepository, RoleRepository, TokenRepository, UserRepository } from 'src/db/repository';
 
 @Module({
   controllers: [UsersController],
-  providers: [UsersService, UserRepository]
+  providers: [UsersService, UserRepository, RoleRepository, RoleAvailableRepository, TokenRepository],
 })
-export class UsersModule {}
+export class UsersModule { }

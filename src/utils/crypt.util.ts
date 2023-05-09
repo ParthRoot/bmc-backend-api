@@ -61,8 +61,21 @@ export const jwtSign = (data: object) => {
     });
 };
 
+export const jwtSignForEmailVerification = (data: object) => {
+    return jwt.sign(data, getEnv('JWT_EMAIL_VERIFICATION_SALT', 'secret'), {
+        algorithm: 'HS256',
+        expiresIn: getEnv('JWT_EXPIRES_EMAIL_VERIFICATION', '1 days')
+    });
+};
+
 export const jwtVerify = (token: string) => {
     return jwt.verify(token, getEnv('JWT_SALT', 'secret'), {
+        algorithms: ['HS256'],
+    });
+};
+
+export const jwtVerifyForEmailVerification = (token: string) => {
+    return jwt.verify(token, getEnv('JWT_EMAIL_VERIFICATION_SALT', 'secret'), {
         algorithms: ['HS256'],
     });
 };

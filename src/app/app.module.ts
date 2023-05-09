@@ -7,7 +7,7 @@ import { UsersModule } from 'src/users/users.module';
 @Module({
   imports: [
     TypeOrmModule.forRootAsync({ useFactory: () => ormConfig }),
-    UsersModule
+    UsersModule,
   ],
   controllers: [AppController],
   providers: [],
