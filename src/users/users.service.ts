@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { UserRepository, RoleRepository, RoleAvailableRepository, TokenRepository } from 'src/db/repository';
-import { UserSignUpReqDto } from './common/dto/req';
-import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res';
+import { ReSendVerificationLinkReqDto, UserSignUpReqDto } from './common/dto/req';
+import { ReSendVerificationLinkResDto, UserSignUpResDto, VerifyUserResDto } from './common/dto/res';
 import * as bcrypt from 'bcryptjs';
 import { jwtSign, jwtSignForEmailVerification, jwtVerifyForEmailVerification } from 'src/utils';
 import { TokenType } from 'src/db/entity';
@@ -35,26 +35,21 @@ export class UsersService {
         throw new Error(`${roleName} does not exists`);
       }
 
-      //hash
       const salt = await bcrypt.genSalt();
       const password_hash = await bcrypt.hash(password, salt);
 
-      //create entry in user table
       const user = this.userRepository.create({ email, name, password_hash });
       const savedUser = await this.userRepository.save(user);
 
-      //generateToken
       const data = { id: savedUser.id, email: savedUser.email };
       const token = jwtSignForEmailVerification(data);
 
-      //create entry in role table
       const role = await this.roleRepository.create();
       role.user = savedUser;
       role.role = roleExists;
       await this.roleRepository.save(role);
 
-      //create entry in token table
-      const tokenStore = this.tokenRepository.create({
+      const tokenStore = await this.tokenRepository.create({
         token: token, token_type: TokenType.EmailConfirmation, attempts: 1,
         token_generated_date: moment(),
         token_expired_date: moment().add(1, 'days'),
@@ -63,7 +58,7 @@ export class UsersService {
 
       await this.tokenRepository.save(tokenStore);
 
-      return new UserSignUpResDto(`user register successfully`);
+      return new UserSignUpResDto(savedUser);
     } catch (error) {
       throw new Error(`Could not signUp user ${error.message}`);
     }
@@ -76,11 +71,8 @@ export class UsersService {
    */
   async verifyEmail(token: string): Promise<VerifyUserResDto> {
     try {
-      const verifyToken = jwtVerifyForEmailVerification(token) as { id: string; email: string; };
+      const verifyToken = Object(jwtVerifyForEmailVerification(token));
 
-      console.log(verifyToken);
-
-      //update is_Verified status
       const userExists = await this.userRepository.findOneBy({ email: verifyToken.email });
 
       if (!userExists) {
@@ -94,10 +86,49 @@ export class UsersService {
       userExists.is_verified = true;
       await this.userRepository.update({ email: verifyToken.email }, userExists);
 
-      return new VerifyUserResDto(`User is verified successfully`);
+      await this.tokenRepository.delete({ user: verifyToken.id });
+
+      return new VerifyUserResDto(userExists);
     } catch (error) {
-      throw new Error(`Could not signUp user ${error.message}`);
+      throw new Error(`${error.message}`);
     }
+  }
+
+  async reSendVerificationLink(data: ReSendVerificationLinkReqDto): Promise<ReSendVerificationLinkResDto> {
+    try {
+
+      const is_Token_Available = await this.tokenRepository.findOne({
+        where: { user: { email: data.email, is_verified: false } },
+        relations: ['user'],
+      });
+
+      if (is_Token_Available.attempts >= 3) {
+        throw Error('You have exceeded the maximum number of attempts, Please try again after 24 hours');
+      }
+
+      const nowDateTime = moment();
+      const is_Expired_Token = nowDateTime.isAfter(is_Token_Available.token_expired_date);
+
+      if (is_Expired_Token) {
+
+        const data = { id: is_Token_Available.user.id, email: is_Token_Available.user.email };
+        const token = jwtSignForEmailVerification(data);
+
+        is_Token_Available.token = token;
+        is_Token_Available.attempts = 1;
+        is_Token_Available.token_generated_date = moment();
+        is_Token_Available.token_expired_date = moment().add(1, 'days');
+
+        await this.tokenRepository.update({ id: is_Token_Available.id }, is_Token_Available);
+      } else {
+        await this.tokenRepository.increment({ id: is_Token_Available.id }, 'attempts', 1);
+      }
+
+      return new ReSendVerificationLinkResDto(is_Token_Available);
+    } catch (error) {
+      throw new Error(`${error.message}`);
+    }
+
   }
 
   async loginUser(userLogin: UsersLoginReqDto): Promise<UsersLoginResDto> {

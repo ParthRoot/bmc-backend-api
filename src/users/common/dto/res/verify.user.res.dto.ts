@@ -1,5 +1,4 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { BaseResDto } from './base.res.dto';
 
 export class VerifyUserResDto {
     @ApiProperty({
@@ -13,7 +12,7 @@ export class VerifyUserResDto {
     constructor(
         data
     ) {
-        this.name = data;
+        this.name = data.name;
 
     }
 }

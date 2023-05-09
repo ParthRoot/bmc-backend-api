@@ -1,13 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters, HttpException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UserSignUpReqDto } from './common/dto/req/index';
-import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res/index';
-import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { ReSendVerificationLinkReqDto, UserSignUpReqDto } from './common/dto/req/index';
+import { ReSendVerificationLinkResDto, UserSignUpResDto, VerifyUserResDto } from './common/dto/res/index';
+import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiOkResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AvailableRoleEnum } from 'src/utils';
-import messages from 'src/utils/messages';
 import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
 import { BaseResDto, UsersLoginResDto } from './common/dto/res';
 import { message } from 'src/utils/message';
+
 
 @ApiTags("User")
 @Controller('users')
@@ -29,14 +29,11 @@ export class UsersController {
   })
   async userSignUp(@Body() data: UserSignUpReqDto): Promise<BaseResDto<UserSignUpResDto>> {
     const result = await this.usersService.userSignUp(data, AvailableRoleEnum.NORMAL);
-    return new BaseResDto(messages.userSignUp, result);
+    return new BaseResDto(message.userSignUp, result);
   }
 
   @Get('verifyEmail/:token')
-  @ApiCreatedResponse({
-    type: VerifyUserResDto,
-    description: 'verified user',
-  })
+  @ApiOkResponse({ type: VerifyUserResDto })
   @ApiNotFoundResponse({
     description: 'user is not found'
   })
@@ -45,7 +42,15 @@ export class UsersController {
   })
   async verifyEmail(@Param('token') token: string): Promise<BaseResDto<VerifyUserResDto>> {
     const result = await this.usersService.verifyEmail(token);
-    return new BaseResDto(messages.verifyToken, result);
+    return new BaseResDto(message.verifyToken, result);
+  }
+
+  @Get('resendVerificationLink')
+  async reSendVerificationLink(@Body() data: ReSendVerificationLinkReqDto): Promise<BaseResDto<ReSendVerificationLinkResDto>> {
+    const result = await this.usersService.reSendVerificationLink(data);
+
+    console.log("Result", result);
+    return new BaseResDto(message.resendVerificationLink, result);
   }
 
   @ApiTags('users')

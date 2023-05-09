@@ -3,14 +3,23 @@ import { IsOptional, IsObject } from 'class-validator';
 
 export class UserSignUpResDto {
     @ApiProperty({
-        name: 'message',
-        description: 'message',
+        name: 'name',
+        description: 'name',
         type: 'string',
         required: true,
     })
-    message: string;
+    name: string;
 
-    constructor(message) {
-        this.message = message;
+    @ApiProperty({
+        name: 'email',
+        description: 'email',
+        type: 'email',
+        required: true,
+    })
+    email: string;
+
+    constructor(data) {
+        this.name = data.name;
+        this.email = data.email;
     }
 }
