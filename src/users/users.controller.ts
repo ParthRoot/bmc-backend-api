@@ -2,10 +2,12 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseFilters, HttpExce
 import { UsersService } from './users.service';
 import { UserSignUpReqDto } from './common/dto/req/index';
 import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res/index';
-import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiConflictResponse, ApiCreatedResponse, ApiNotFoundResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { AvailableRoleEnum } from 'src/utils';
-import { BaseResDto } from './common/dto/res/base.res.dto';
 import messages from 'src/utils/messages';
+import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
+import { BaseResDto, UsersLoginResDto } from './common/dto/res';
+import { message } from 'src/utils/message';
 
 @ApiTags("User")
 @Controller('users')
@@ -45,4 +47,23 @@ export class UsersController {
     const result = await this.usersService.verifyEmail(token);
     return new BaseResDto(messages.verifyToken, result);
   }
-};
+
+  @ApiTags('users')
+  @ApiCreatedResponse({
+    description: 'user login successfully',
+    type: UsersLoginResDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'user cannot found',
+  })
+  @ApiUnauthorizedResponse({
+    description: 'user cannot login',
+  })
+  @Post('login')
+  async userLogin(
+    @Body() userloginDto: UsersLoginReqDto
+  ): Promise<BaseResDto<UsersLoginResDto>> {
+    const result = await this.usersService.loginUser(userloginDto);
+    return new BaseResDto(message.loginUser, result);
+  };
+}

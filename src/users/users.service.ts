@@ -3,8 +3,10 @@ import { UserRepository, RoleRepository, RoleAvailableRepository, TokenRepositor
 import { UserSignUpReqDto } from './common/dto/req';
 import { UserSignUpResDto, VerifyUserResDto } from './common/dto/res';
 import * as bcrypt from 'bcryptjs';
-import { jwtSignForEmailVerification, jwtVerifyForEmailVerification } from 'src/utils';
+import { jwtSign, jwtSignForEmailVerification, jwtVerifyForEmailVerification } from 'src/utils';
 import { TokenType } from 'src/db/entity';
+import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
+import { UsersLoginResDto } from './common/dto/res/users.login.response.dto';
 const moment = require('moment');
 
 @Injectable()
@@ -67,9 +69,14 @@ export class UsersService {
     }
   }
 
-  async verifyEmail(token): Promise<VerifyUserResDto> {
+  /**
+   * verify user email using link
+   * @param token 
+   * @returns 
+   */
+  async verifyEmail(token: string): Promise<VerifyUserResDto> {
     try {
-      const verifyToken = jwtVerifyForEmailVerification(token);
+      const verifyToken = jwtVerifyForEmailVerification(token) as { id: string; email: string; };
 
       console.log(verifyToken);
 
@@ -92,6 +99,42 @@ export class UsersService {
       throw new Error(`Could not signUp user ${error.message}`);
     }
   }
+
+  async loginUser(userLogin: UsersLoginReqDto): Promise<UsersLoginResDto> {
+    try {
+      const { email, password } = userLogin;
+
+      const user = await this.userRepository.findOne({
+        where: { email },
+        relations: { role: { role: true } }
+      });
+
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      if (!user.is_verified) {
+        throw new Error('User is not verified');
+      }
+
+      if (!user.is_active) {
+        throw new Error('User is not active, please contact admin');
+      }
+
+      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+
+      if (!isPasswordValid) {
+        throw new Error('Please enter correct password');
+      }
+
+      const data = { id: user.id, email: user.email, role: user.role[0].role.name };
+      const token = jwtSign(data);
+
+      return new UsersLoginResDto(token);
+    } catch (error) {
+      console.error('An error occurred while logging in the user: ', error);
+      throw new Error(error.message);
+    }
+  }
+
 }
-
-
