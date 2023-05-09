@@ -15,7 +15,7 @@ export class RoleEntity {
     @PrimaryGeneratedColumn('increment', { type: 'bigint' })
     id!: bigint;
 
-    @ManyToOne(() => UserEntity, (user) => user.id, { cascade: true })
+    @ManyToOne(() => UserEntity, (user) => user.id, { onDelete: 'CASCADE' })
     @JoinColumn({ name: 'user_id' })
     @JoinTable()
     user!: UserEntity;
