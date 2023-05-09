@@ -2,8 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, NotFoundE
 import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
 import { ApiCreatedResponse, ApiNotFoundResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { UsersLoginResDto } from './common/dto/res';
-import { BaseResDto } from './common/dto/res/base.res.dto';
+import { BaseResDto, UsersLoginResDto } from './common/dto/res';
 import {message} from 'src/utils/message';
 
 @Controller('users')

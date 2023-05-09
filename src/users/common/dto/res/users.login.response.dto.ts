@@ -8,14 +8,9 @@ export class UsersLoginResDto {
     type: 'string',
     required: true,
 })
+  token: string;
 
-  token?: string | undefined;
-
- 
-  constructor(
-    data
-) {
+  constructor(data) {
     this.token = data;
-
-}
+ }
 }
