@@ -2,9 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
 import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
-import { comparePassword, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification } from 'src/utils';
-import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
+import { comparePassword, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification, otpGenerator } from 'src/utils';
+import { ResetPasswordReqDto, UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
 import { UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
+import { message } from 'src/utils/message';
+import { Token } from 'aws-sdk';
 
 const moment = require('moment');
 
@@ -55,7 +57,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new UserAvaialbleError(`messages.userProfileNotExist`);
+      throw new UserAvaialbleError(message.userProfileNotExist);
     }
 
     return user;
@@ -149,6 +151,55 @@ export class UsersService {
     return newToken;
   }
 
+  private async generateEmailForgetPasswordOtp(
+    user: UserEntity,
+    attempts: number
+  ){
+    const curreTime = moment().toDate();
+    const expiry = moment().add(15, 'minutes').toDate();
+    const newOtp = otpGenerator(6);
+
+    const otp = await this.tokenRepository.create();
+    otp.user = user;
+    otp.token_type = TokenType.ForgotPassword;
+    otp.attempts = attempts;
+    otp.token_generation_date = curreTime;
+    otp.token_expiration_date = expiry;
+    otp.token = newOtp;
+
+    const newToken = await this.tokenRepository.save(otp);
+
+    return newToken;
+  }
+
+
+  private async findForgetPasswordOtp(userId: string) {
+    const otp = await this.tokenRepository.findOne({
+      where: {
+        user: {
+          id: userId
+        },
+        token_type: TokenType.ForgotPassword
+      }
+    });
+
+    if (!otp) {
+      return false;
+    }
+    return otp;
+  }
+
+
+  private async deleteExpiredEmailForgetPasswordOtp(userId: string) {
+    await this.tokenRepository.delete({
+      user: {
+        id: userId
+      },
+      token_type: TokenType.ForgotPassword
+    });
+    return;
+  }
+
   async userSignUp(payload: UsersSignUpReqDto) {
     try {
       const role = await this.assertRoleAvailable('NORMAL');
@@ -225,19 +276,58 @@ export class UsersService {
         throw new Error('User is not active, please contact admin');
       }
 
-      const isPasswordValid = comparePassword(password, user.password_hash);
+      const isPasswordValid =await comparePassword(password, user.password_hash);
 
       if (!isPasswordValid) {
         throw new Error('Please enter correct password');
       }
+      else{
+        const data = { id: user.id, email: user.email, role: user.role[0].role.name };
+        const token = jwtSign(data);
+  
+        return new UsersLoginResDto(token);
+      }
 
-      const data = { id: user.id, email: user.email, role: user.role[0].role.name };
-      const token = jwtSign(data);
-
-      return new UsersLoginResDto(token);
+     
     } catch (error) {
       console.error('An error occurred while logging in the user: ', error);
       throw new Error(error.message);
     }
   }
+
+  async forgetPassword(email: string ) {
+    try {
+      const currentDate = moment().unix();
+      const user = await this.assertUserAvailableViaEmail(email);
+  
+      if (!user.is_active) {
+        throw new Error('User is not active, contact the admin');
+      }
+  
+      let otp = await this.findForgetPasswordOtp(user.id);
+  
+      if (otp === false) {
+        otp = await this.generateEmailForgetPasswordOtp(user, 1);
+      } else if (currentDate > moment(otp.token_expiration_date).unix()) {
+        await this.deleteExpiredEmailForgetPasswordOtp(user.id);
+        otp = await this.generateEmailForgetPasswordOtp(user, 1);
+      } else {
+        await this.tokenRepository.increment({ user }, 'attempts', 1);
+      }
+  
+      return otp;
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  // async resetPassword(email: string,otp: string, newPassword: string){
+  //   try{
+
+  //   }
+  //   catch(e){
+  //     throw e;
+  //   }
+  // }
+  
 }
