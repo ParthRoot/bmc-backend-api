@@ -7,10 +7,10 @@ export class UsersLoginResDto {
     description: 'token',
     type: 'string',
     required: true,
-})
+  })
   token: string;
 
   constructor(data) {
     this.token = data;
- }
+  }
 }

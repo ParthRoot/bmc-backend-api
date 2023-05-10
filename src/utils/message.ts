@@ -1,3 +1,5 @@
 export const message = {
-    loginUser : 'User Log in Successfully!!'
-}
+    userSignUp: 'User has successfully signup & Email verification link send successfully',
+    resendEmailVerification: 'Email hans been successfully send',
+    loginUser: 'User Log in Successfully!!'
+};

@@ -1,7 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 
-export class BaseResDto<T> {
+export class BaseEmailVerificationResendResDto {
     @ApiProperty({
         name: 'message',
         description: 'message',
@@ -24,7 +24,7 @@ export class BaseResDto<T> {
         type: 'any',
         required: false
     })
-    data: T;
+    data: any;
 
     constructor(
         message,

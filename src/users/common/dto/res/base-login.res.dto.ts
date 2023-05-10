@@ -1,7 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { UsersLoginResDto } from './users.login.res.dto';
 
 
-export class BaseResDto<T> {
+export class BaseLoginResDto {
     @ApiProperty({
         name: 'message',
         description: 'message',
@@ -21,10 +22,10 @@ export class BaseResDto<T> {
     @ApiProperty({
         name: 'Data',
         description: 'data',
-        type: 'any',
+        type: UsersLoginResDto,
         required: false
     })
-    data: T;
+    data: UsersLoginResDto;
 
     constructor(
         message,
@@ -32,6 +33,6 @@ export class BaseResDto<T> {
     ) {
         this.message = message;
         this.is_error = false;
-        this.data = data;
+        this.data = new UsersLoginResDto(data);
     }
 }

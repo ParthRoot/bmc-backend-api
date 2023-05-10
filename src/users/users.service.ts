@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
-import { TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
-import { getEnv, jwtSign, jwtSignForEmailVerification } from 'src/utils';
-import { UsersLoginReqDto } from './common/dto/req';
-import { UsersLoginResDto } from './common/dto/res';
+import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
+import { comparePassword, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification } from 'src/utils';
+import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
+import { UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
 
 const moment = require('moment');
 
@@ -18,15 +18,36 @@ export class UserError extends Error {
 export class UsersService {
   constructor(
     private readonly tokenRepository: TokenRepository,
-    private readonly userRepository: UserRepository
+    private readonly userRepository: UserRepository,
+    private readonly roleRepository: RoleRepository,
+    private readonly roleAvailableRepository: RoleAvailableRepository
   ) { }
+
+  /**
+    * It will check that role is available in the database
+    * @param role string
+    * @returns Promise<RoleAvailableRepository | null>
+    */
+  private async assertRoleAvailable(role: string) {
+    const data = await this.roleAvailableRepository.findOne({
+      where: {
+        name: role,
+      },
+    });
+
+    if (!data) {
+      throw new RoleAvaialbleError(`${role} is not available`);
+    }
+
+    return data;
+  }
 
   /**
      * It will check user exist in the database.
      * @param email string
      * @returns UserEntity
      */
-  async assertUserAvailableViaEmail(email: string) {
+  private async assertUserAvailableViaEmail(email: string) {
     const user = await this.userRepository.findOne({
       where: {
         email,
@@ -40,7 +61,46 @@ export class UsersService {
     return user;
   }
 
-  async findEmailVerificationToken(userId: string) {
+  /**
+     * It will check User exist in the database.
+     * @param email string
+     * @returns UserEntity
+     */
+  private async checkUserAvailableViaEmail(email: string) {
+    const user = await this.userRepository.findOne({
+      where: {
+        email,
+      },
+    });
+
+    if (!user) {
+      return false;
+    }
+
+    return user;
+  }
+
+  /**
+   * it will create new user.
+   * @param payload sign up API body 
+   * @returns
+   */
+  private async createNewUser(payload: UsersSignUpReqDto) {
+    const passHash = await generateSaltAndHash(payload.password);
+
+    const user = this.userRepository.create();
+    user.email = payload.email;
+    user.name = payload.name;
+    user.password_hash = passHash.passwordHash;
+    user.avatar = payload?.avatar ?? null;
+    user.is_verified = false;
+
+    const saveUser = await this.userRepository.save(user);
+
+    return saveUser;
+  }
+
+  private async findEmailVerificationToken(userId: string) {
     const token = await this.tokenRepository.findOne({
       where: {
         user: {
@@ -56,7 +116,7 @@ export class UsersService {
     return token;
   }
 
-  async deleteExpiredEmailVerificationToken(userId: string) {
+  private async deleteExpiredEmailVerificationToken(userId: string) {
     await this.tokenRepository.delete({
       user: {
         id: userId
@@ -66,7 +126,7 @@ export class UsersService {
     return;
   }
 
-  async generateNewEmailVerificationToken(
+  private async generateNewEmailVerificationToken(
     user: UserEntity,
     attempts: number
   ) {
@@ -89,10 +149,33 @@ export class UsersService {
     return newToken;
   }
 
+  async userSignUp(payload: UsersSignUpReqDto) {
+    try {
+      const role = await this.assertRoleAvailable('NORMAL');
+      const userExists = await this.checkUserAvailableViaEmail(payload.email);
+
+      if (userExists) {
+        throw new Error('User Already Exists with given email');
+      }
+
+      const newUser = await this.createNewUser(payload);
+
+      // assign the role
+      const assign = this.roleRepository.create({
+        user: newUser,
+        role: role,
+      });
+      await this.roleRepository.save(assign);
+      const emailVerification = await this.generateNewEmailVerificationToken(newUser, 1);
+      return new UsersCreateResDto(newUser);
+    } catch (e) {
+      throw e;
+    }
+  }
+
   async resendEmailVerification(email: string) {
     try {
       const currentDate = moment().unix();
-      console.log("currentDate", currentDate);
       const user = await this.assertUserAvailableViaEmail(email);
 
       if (user.is_verified) {
@@ -119,7 +202,9 @@ export class UsersService {
     }
   }
 
-  async loginUser(userLogin: UsersLoginReqDto): Promise<UsersLoginResDto> {
+  async loginUser(
+    userLogin: UsersLoginReqDto
+  ): Promise<UsersLoginResDto> {
     try {
       const { email, password } = userLogin;
 
@@ -140,7 +225,7 @@ export class UsersService {
         throw new Error('User is not active, please contact admin');
       }
 
-      const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+      const isPasswordValid = comparePassword(password, user.password_hash);
 
       if (!isPasswordValid) {
         throw new Error('Please enter correct password');

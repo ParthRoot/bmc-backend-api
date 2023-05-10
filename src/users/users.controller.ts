@@ -1,35 +1,67 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, NotFoundException } from '@nestjs/common';
+import { Controller, Get, Post, Body, Type } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UsersLoginReqDto } from './common/dto/req/users.login.request.dto';
-import { ApiCreatedResponse, ApiNotFoundResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { BaseResDto, UsersLoginResDto } from './common/dto/res';
+import { UsersLoginReqDto } from './common/dto/req/users.login.req.dto';
+import { ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { BaseResDto, BaseSignUpResDto, UsersLoginResDto } from './common/dto/res';
 import { message } from 'src/utils/message';
+import { ResendEmailVerificationReqDto, UsersSignUpReqDto } from './common/dto/req';
+import { BaseLoginResDto } from './common/dto/res/base-login.res.dto';
+import { BaseEmailVerificationResendResDto } from './common/dto/res/base-email-verification-resend.res.dto';
 
+@ApiTags('users')
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) { }
 
-  @Post('resend-verification-email')
-  async resendEmailVerification(@Body() body: any) {
-    const result = await this.usersService.resendEmailVerification(body.email);
+  @Post('signup')
+  @ApiOperation({
+    summary: 'User Signup',
+    description: 'Register User.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User SignUp',
+    type: BaseSignUpResDto
+  })
+  async userSignUp(
+    @Body() body: UsersSignUpReqDto
+  ): Promise<BaseSignUpResDto> {
+    const result = await this.usersService.userSignUp(body);
+    return new BaseSignUpResDto(message.userSignUp, result);
+
   }
 
-  @ApiTags('users')
-  @ApiCreatedResponse({
-    description: 'user login successfully',
-    type: UsersLoginResDto,
+  @Post('resend-verification-email')
+  @ApiOperation({
+    summary: 'Resend Email Verification Link.',
+    description: 'Resend Email Verification Link To User Email.',
   })
-  @ApiNotFoundResponse({
-    description: 'user cannot found',
+  @ApiResponse({
+    status: 201,
+    description: 'User Email Verification Resend.',
+    type: BaseEmailVerificationResendResDto
   })
-  @ApiUnauthorizedResponse({
-    description: 'user cannot login',
-  })
+  async resendEmailVerification(
+    @Body() body: ResendEmailVerificationReqDto
+  ): Promise<BaseEmailVerificationResendResDto> {
+    const result = await this.usersService.resendEmailVerification(body.email);
+    return new BaseEmailVerificationResendResDto(message.resendEmailVerification, {});
+  }
+
   @Post('login')
+  @ApiOperation({
+    summary: 'Log in a user',
+    description: 'Authenticates a user and returns a token',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User login successful',
+    type: BaseLoginResDto
+  })
   async userLogin(
     @Body() userloginDto: UsersLoginReqDto
-  ): Promise<BaseResDto<UsersLoginResDto>> {
+  ): Promise<BaseLoginResDto> {
     const result = await this.usersService.loginUser(userloginDto);
-    return new BaseResDto(message.loginUser, result);
+    return new BaseLoginResDto(message.loginUser, result);
   }
 }
