@@ -186,11 +186,7 @@ export class UsersService {
     try {
       const verifyToken = Object(emailVerify(token));
 
-      console.log("VerifyToken", verifyToken);
-
       const userExists = await this.checkUserAvailableViaEmail(verifyToken.email);
-
-      console.log("UserExists", userExists);
 
       if (!userExists) {
         throw new Error('User not found');

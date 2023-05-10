@@ -33,15 +33,18 @@ export class UsersController {
 
   @Get('verifyEmail/:token')
   @ApiOkResponse({ type: BaseVerifyEmailResDto })
-  @ApiNotFoundResponse({
-    description: 'user is not found'
+  @ApiOperation({
+    summary: 'User Verfied',
+    description: 'User Verified',
   })
-  @ApiConflictResponse({
-    description: 'user is already verified',
+  @ApiResponse({
+    status: 200,
+    description: 'User Verified',
+    type: BaseVerifyEmailResDto
   })
   async verifyEmail(@Param('token') token: string): Promise<BaseVerifyEmailResDto> {
     const result = await this.usersService.verifyEmail(token);
-    return new BaseResDto(message.verifyToken, result);
+    return new BaseVerifyEmailResDto(message.verifyEmail, result);
   }
 
   @Post('resend-verification-email')
