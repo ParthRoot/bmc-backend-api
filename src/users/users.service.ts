@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
 import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
-import { comparePassword, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification } from 'src/utils';
+import { comparePassword, emailVerify, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification } from 'src/utils';
 import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
-import { UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
+import { UsersCreateResDto, UsersLoginResDto, VerifyEmailResDto } from './common/dto/res';
 
 const moment = require('moment');
 
@@ -126,6 +126,10 @@ export class UsersService {
     return;
   }
 
+  private async updateUser(userId: string, data: object) {
+    await this.userRepository.update(userId, data);
+  }
+
   private async generateNewEmailVerificationToken(
     user: UserEntity,
     attempts: number
@@ -170,6 +174,40 @@ export class UsersService {
       return new UsersCreateResDto(newUser);
     } catch (e) {
       throw e;
+    }
+  }
+
+  /**
+  * verify user email using link
+  * @param token 
+  * @returns 
+  */
+  async verifyEmail(token: string): Promise<VerifyEmailResDto> {
+    try {
+      const verifyToken = Object(emailVerify(token));
+
+      console.log("VerifyToken", verifyToken);
+
+      const userExists = await this.checkUserAvailableViaEmail(verifyToken.email);
+
+      console.log("UserExists", userExists);
+
+      if (!userExists) {
+        throw new Error('User not found');
+      }
+
+      if (userExists.is_verified) {
+        throw new Error("User is already verified");
+      }
+
+      userExists.is_verified = true;
+      await this.updateUser(verifyToken.id, userExists);
+
+      await this.deleteExpiredEmailVerificationToken(verifyToken.id);
+
+      return new VerifyEmailResDto(userExists);
+    } catch (error) {
+      throw new Error(`${error.message}`);
     }
   }
 
