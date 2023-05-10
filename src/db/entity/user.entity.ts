@@ -54,16 +54,6 @@ export class UserEntity {
     @DeleteDateColumn()
     delete_at!: Date;
 
-    @Column({
-        type: 'text',
-        unique: true,
-        nullable: true,
-    })
-    otp!: string | null;
-
-    @Column({ type: 'timestamptz', nullable: true })
-    otp_expires_at!: Date | null;
-
     @Column({ type: 'varchar', length: 300, nullable: true, default: null })
     avatar!: string;
 }
