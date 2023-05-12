@@ -7,6 +7,7 @@ import { ResetPasswordReqDto, UsersLoginReqDto, UsersSignUpReqDto } from './comm
 import { BaseResetPasswordResDto, UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
 import { message } from 'src/utils/message';
 import { Token } from 'aws-sdk';
+import { clearConfigCache } from 'prettier';
 
 const moment = require('moment');
 
@@ -347,7 +348,7 @@ export class UsersService {
         throw new Error("OTP Does not match")
       }
 
-      if(currentDate > moment(forgetPassOtp.token_expiration_date).unix){
+      if(currentDate > moment(forgetPassOtp.token_expiration_date).unix()){
         throw new Error('OTP has expired');
       }
 

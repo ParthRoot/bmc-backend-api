@@ -102,9 +102,4 @@ export class UsersController {
     return new BaseResetPasswordResDto(message.resetPassword, result);
   }
 
-  // @Post()
-  // async resetPassword(@Body() body: ResetPasswordReqDto): Promise<ResetPasswordResDto> {
-  //   await this.resetPasswordService.resetPassword(body.email, body.otp, body.newPassword);
-  //   return { message: 'Password reset successful' };
-  // }
 }
