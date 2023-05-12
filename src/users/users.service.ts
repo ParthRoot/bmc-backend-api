@@ -1,29 +1,13 @@
 import { Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
-import {
-  RoleAvaialbleError,
-  RoleAvailableRepository,
-  RoleRepository,
-  TokenRepository,
-  UserAvaialbleError,
-  UserRepository,
-} from 'src/db/repository';
-import {
-  VerifyEmailTokenPayload,
-  comparePassword,
-  emailVerify,
-  generateSaltAndHash,
-  getEnv,
-  jwtSign,
-  jwtSignForEmailVerification,
-} from 'src/utils';
+import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
+import { VerifyEmailTokenPayload, comparePassword, emailVerify, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification, otpGenerator } from 'src/utils';
 import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
-import {
-  UsersCreateResDto,
-  UsersLoginResDto,
-  VerifyEmailResDto,
-} from './common/dto/res';
+import { UsersCreateResDto, UsersLoginResDto, VerifyEmailResDto } from './common/dto/res';
+import { message } from 'src/utils/message';
+import { clearConfigCache } from 'prettier';
+
 
 const moment = require('moment');
 
@@ -74,7 +58,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new UserAvaialbleError(`messages.userProfileNotExist`);
+      throw new UserAvaialbleError(message.userProfileNotExist);
     }
 
     return user;
@@ -119,6 +103,11 @@ export class UsersService {
     return saveUser;
   }
 
+  /**
+   * it will find token for verification
+   * @param userId find token for verification
+   * @returns token
+   */
   private async findEmailVerificationToken(userId: string) {
     const token = await this.tokenRepository.findOne({
       where: {
@@ -135,6 +124,11 @@ export class UsersService {
     return token;
   }
 
+  /**
+   * it will delete expire verification token
+   * @param userId expired token wil delete
+   * @returns delete token
+   */
   private async deleteExpiredEmailVerificationToken(userId: string) {
     await this.tokenRepository.delete({
       user: {
@@ -145,6 +139,12 @@ export class UsersService {
     return;
   }
 
+  /**
+   * it generate new token
+   * @param user UserEntity
+   * @param attempts number
+   * @returns token
+   */
   private async updateUser(data: UserEntity) {
     await this.userRepository.update(data.id, data);
   }
@@ -171,6 +171,86 @@ export class UsersService {
     const newToken = await this.tokenRepository.save(token);
 
     return newToken;
+  }
+
+  /**
+   * it will give otp when user forget password
+   * @param user generate otp
+   * @param attempts numbr of attempts return
+   * @returns otp in mail
+   */
+  private async generateForgetPasswordOtp(
+    user: UserEntity,
+    attempts: number
+  ){
+    const curreTime = moment().toDate();
+    const expiry = moment().add(15, 'minutes').toDate();
+    const newOtp = otpGenerator(6);
+
+    const otp = await this.tokenRepository.create();
+    otp.user = user;
+    otp.token_type = TokenType.ForgotPassword;
+    otp.attempts = attempts;
+    otp.token_generation_date = curreTime;
+    otp.token_expiration_date = expiry;
+    otp.token = newOtp;
+
+    const newToken = await this.tokenRepository.save(otp);
+
+    return newToken;
+  }
+
+/**
+ * it finds otp exist in table
+ * @param userId find any otp exist
+ * @returns otp
+ */
+  private async findForgetPasswordOtp(userId: string) {
+    const otp = await this.tokenRepository.findOne({
+      where: {
+        user: {
+          id: userId
+        },
+        token_type: TokenType.ForgotPassword
+      }
+    });
+
+    if (!otp) {
+      return false;
+    }
+    return otp;
+  }
+
+/**
+ * it delete expired otp in token table
+ * @param userId delete expired otp
+ * @returns delete otp
+ */
+  private async deleteExpiredForgetPasswordOtp(userId: string) {
+    await this.tokenRepository.delete({
+      user: {
+        id: userId
+      },
+      token_type: TokenType.ForgotPassword
+    });
+    return;
+  }
+
+  /**
+   * it will update old password to new password
+   * @param userId  update new password
+   * @param newPassword generate new password
+   */
+  private async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    try {
+      // Hash the new password before saving it to the database
+      const hashedPassword = await generateSaltAndHash(newPassword)
+      
+      // Update the user's password in the database
+      await this.userRepository.update(userId, { password_hash: hashedPassword.passwordHash });
+    } catch (e) {
+     throw e
+    }
   }
 
   async userSignUp(payload: UsersSignUpReqDto) {
@@ -286,23 +366,78 @@ export class UsersService {
         throw new Error('User is not active, please contact admin');
       }
 
-      const isPasswordValid = comparePassword(password, user.password_hash);
+      const isPasswordValid =await comparePassword(password, user.password_hash);
 
       if (!isPasswordValid) {
         throw new Error('Please enter correct password');
       }
-
-      const data = {
-        id: user.id,
-        email: user.email,
-        role: user.role[0].role.name,
-      };
-      const token = jwtSign(data);
-
-      return new UsersLoginResDto(token);
+      else{
+        const data = { id: user.id, email: user.email, role: user.role[0].role.name };
+        const token = jwtSign(data);
+  
+        return new UsersLoginResDto(token);
+      }
+     
     } catch (error) {
       console.error('An error occurred while logging in the user: ', error);
       throw new Error(error.message);
     }
   }
+
+  async forgetPassword(email: string ) {
+    try {
+      const currentDate = moment().unix();
+      const user = await this.assertUserAvailableViaEmail(email);
+  
+      if (!user.is_active) {
+        throw new Error('User is not active, contact the admin');
+      }
+
+      if (!user.is_verified) {
+        throw new Error('User is not verified');
+      }
+  
+      let otp = await this.findForgetPasswordOtp(user.id);
+  
+      if (otp === false) {
+        otp = await this.generateForgetPasswordOtp(user, 1);
+      } else if (currentDate > moment(otp.token_expiration_date).unix()) {
+        await this.deleteExpiredForgetPasswordOtp(user.id);
+        otp = await this.generateForgetPasswordOtp(user, 1);
+      } else{
+        await this.deleteExpiredForgetPasswordOtp(user.id);
+        await this.generateForgetPasswordOtp(user, otp.attempts + 1);
+      }
+    } catch (e) {
+      throw e;
+    }
+  }
+
+  async resetPassword(email: string,otp: string, newPassword: string){
+    try{
+      const currentDate = moment().unix();
+      const user = await this.assertUserAvailableViaEmail(email);
+      const forgetPassOtp = await this.findForgetPasswordOtp(user.id);
+
+      if(!forgetPassOtp){
+        throw new Error("Otp is invalid")
+      }
+
+      if(otp !== forgetPassOtp.token){
+        throw new Error("OTP Does not match")
+      }
+
+      if(currentDate > moment(forgetPassOtp.token_expiration_date).unix()){
+        throw new Error('OTP has expired');
+      }
+
+      await this.updateUserPassword(user.id, newPassword);
+      await this.deleteExpiredForgetPasswordOtp(user.id);
+
+    }
+    catch(e){
+      throw e;
+    }
+  }
+  
 }

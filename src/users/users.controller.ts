@@ -1,12 +1,15 @@
 import { Controller, Get, Post, Body, Type, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.req.dto';
-import { ApiConflictResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { BaseResDto, BaseSignUpResDto, BaseVerifyEmailResDto, UsersLoginResDto } from './common/dto/res';
+import { ApiOperation, ApiResponse, ApiTags,  ApiOkResponse } from '@nestjs/swagger';
+import { BaseForgetPasswordResDto, BaseSignUpResDto, UsersLoginResDto,  BaseResDto, BaseVerifyEmailResDto} from './common/dto/res';
+import {} from './common/dto/res';
 import { message } from 'src/utils/message';
-import { ResendEmailVerificationReqDto, UsersSignUpReqDto } from './common/dto/req';
+import { ForgetPasswordReqDto, ResendEmailVerificationReqDto, UsersSignUpReqDto } from './common/dto/req';
 import { BaseLoginResDto } from './common/dto/res/base-login.res.dto';
 import { BaseEmailVerificationResendResDto } from './common/dto/res/base-email-verification-resend.res.dto';
+import { ResetPasswordReqDto } from './common/dto/req/reset-password.req.dto';
+import { BaseResetPasswordResDto } from './common/dto/res/base-reset-password.res.dto';
 
 @ApiTags('users')
 @Controller('users')
@@ -78,6 +81,41 @@ export class UsersController {
     @Body() userloginDto: UsersLoginReqDto
   ): Promise<BaseLoginResDto> {
     const result = await this.usersService.loginUser(userloginDto);
-    return new BaseLoginResDto(message.loginUser, result);
+    return new BaseLoginResDto(message.loginUser, result.token);
   }
+
+  @Post('forgetPassword')
+  @ApiOperation({
+    summary: 'forget password of user',
+    description: 'check user and returns a otp in mail',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'send otp in mail successful',
+    type: BaseForgetPasswordResDto
+  })
+  async forgetPassword(
+    @Body() body: ForgetPasswordReqDto
+  ): Promise<BaseForgetPasswordResDto> {
+    const result = await this.usersService.forgetPassword(body.email);
+    return new BaseForgetPasswordResDto(message.forgetPassword, result);
+  }
+
+  @Post('resetPassword')
+  @ApiOperation({
+    summary: 'reset password of user',
+    description: 'your password reset successfully',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'password reset',
+    type: BaseResetPasswordResDto
+  })
+  async resetPassword(
+    @Body() body: ResetPasswordReqDto
+  ): Promise<BaseResetPasswordResDto> {
+    const result = await this.usersService.resetPassword(body.email, body.otp, body.new_password);
+    return new BaseResetPasswordResDto(message.resetPassword, result);
+  }
+
 }
