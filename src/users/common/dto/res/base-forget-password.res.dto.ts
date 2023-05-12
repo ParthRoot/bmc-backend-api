@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UsersLoginResDto } from './users.login.res.dto';
-import { ForgetPasswordResDto } from './forget-password.res.dto';
 
 
 export class BaseForgetPasswordResDto {
@@ -26,7 +25,7 @@ export class BaseForgetPasswordResDto {
         type: UsersLoginResDto,
         required: false
     })
-    data: ForgetPasswordResDto;
+    data: any;
 
     constructor(
         message,
@@ -34,6 +33,6 @@ export class BaseForgetPasswordResDto {
     ) {
         this.message = message;
         this.is_error = false;
-        this.data = new ForgetPasswordResDto(data);
+        this.data = data;
     }
 }

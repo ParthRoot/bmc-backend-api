@@ -5,5 +5,4 @@ export * from './base-login.res.dto';
 export * from './user-create.res.dto';
 export * from './base-signup.res.dto';
 export * from './base-forget-password.res.dto';
-export * from './forget-password.res.dto';
 export * from './base-reset-password.res.dto';

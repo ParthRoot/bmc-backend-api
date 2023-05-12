@@ -103,6 +103,11 @@ export class UsersService {
     return saveUser;
   }
 
+  /**
+   * it will find token for verification
+   * @param userId find token for verification
+   * @returns token
+   */
   private async findEmailVerificationToken(userId: string) {
     const token = await this.tokenRepository.findOne({
       where: {
@@ -119,6 +124,11 @@ export class UsersService {
     return token;
   }
 
+  /**
+   * it will delete expire verification token
+   * @param userId expired token wil delete
+   * @returns delete token
+   */
   private async deleteExpiredEmailVerificationToken(userId: string) {
     await this.tokenRepository.delete({
       user: {
@@ -129,6 +139,12 @@ export class UsersService {
     return;
   }
 
+  /**
+   * it generate new token
+   * @param user UserEntity
+   * @param attempts number
+   * @returns token
+   */
   private async generateNewEmailVerificationToken(
     user: UserEntity,
     attempts: number
@@ -152,7 +168,13 @@ export class UsersService {
     return newToken;
   }
 
-  private async generateEmailForgetPasswordOtp(
+  /**
+   * it will give otp when user forget password
+   * @param user generate otp
+   * @param attempts numbr of attempts return
+   * @returns otp in mail
+   */
+  private async generateForgetPasswordOtp(
     user: UserEntity,
     attempts: number
   ){
@@ -173,7 +195,11 @@ export class UsersService {
     return newToken;
   }
 
-
+/**
+ * it finds otp exist in table
+ * @param userId find any otp exist
+ * @returns otp
+ */
   private async findForgetPasswordOtp(userId: string) {
     const otp = await this.tokenRepository.findOne({
       where: {
@@ -190,8 +216,12 @@ export class UsersService {
     return otp;
   }
 
-
-  private async deleteExpiredEmailForgetPasswordOtp(userId: string) {
+/**
+ * it delete expired otp in token table
+ * @param userId delete expired otp
+ * @returns delete otp
+ */
+  private async deleteExpiredForgetPasswordOtp(userId: string) {
     await this.tokenRepository.delete({
       user: {
         id: userId
@@ -201,7 +231,12 @@ export class UsersService {
     return;
   }
 
-  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+  /**
+   * it will update old password to new password
+   * @param userId  update new password
+   * @param newPassword generate new password
+   */
+  private async updateUserPassword(userId: string, newPassword: string): Promise<void> {
     try {
       // Hash the new password before saving it to the database
       const hashedPassword = await generateSaltAndHash(newPassword)
@@ -316,19 +351,19 @@ export class UsersService {
       if (!user.is_active) {
         throw new Error('User is not active, contact the admin');
       }
+
+      if (!user.is_verified) {
+        throw new Error('User is not active, contact the admin');
+      }
   
       let otp = await this.findForgetPasswordOtp(user.id);
   
       if (otp === false) {
-        otp = await this.generateEmailForgetPasswordOtp(user, 1);
+        otp = await this.generateForgetPasswordOtp(user, 1);
       } else if (currentDate > moment(otp.token_expiration_date).unix()) {
-        await this.deleteExpiredEmailForgetPasswordOtp(user.id);
-        otp = await this.generateEmailForgetPasswordOtp(user, 1);
-      } else {
-        await this.tokenRepository.increment({ user }, 'attempts', 1);
-      }
-  
-      return otp;
+        await this.deleteExpiredForgetPasswordOtp(user.id);
+        otp = await this.generateForgetPasswordOtp(user, otp.attempts+1);
+      } 
     } catch (e) {
       throw e;
     }
@@ -353,6 +388,7 @@ export class UsersService {
       }
 
       await this.updateUserPassword(user.id, newPassword);
+      await this.deleteExpiredForgetPasswordOtp(user.id);
 
     }
     catch(e){

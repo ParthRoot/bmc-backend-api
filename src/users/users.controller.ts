@@ -81,8 +81,7 @@ export class UsersController {
     @Body() body: ForgetPasswordReqDto
   ): Promise<BaseForgetPasswordResDto> {
     const result = await this.usersService.forgetPassword(body.email);
-    console.log(result.token)
-    return new BaseForgetPasswordResDto(message.forgetPassword, result.token);
+    return new BaseForgetPasswordResDto(message.forgetPassword, result);
   }
 
   @Post('resetPassword')
