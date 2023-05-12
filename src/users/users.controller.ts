@@ -1,8 +1,8 @@
-import { Controller, Get, Post, Body, Type } from '@nestjs/common';
+import { Controller, Get, Post, Body, Type, Param } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.req.dto';
-import { ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
-import { BaseResDto, BaseSignUpResDto, UsersLoginResDto } from './common/dto/res';
+import { ApiConflictResponse, ApiNotFoundResponse, ApiOkResponse, ApiOperation, ApiResponse, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
+import { BaseResDto, BaseSignUpResDto, BaseVerifyEmailResDto, UsersLoginResDto } from './common/dto/res';
 import { message } from 'src/utils/message';
 import { ResendEmailVerificationReqDto, UsersSignUpReqDto } from './common/dto/req';
 import { BaseLoginResDto } from './common/dto/res/base-login.res.dto';
@@ -29,6 +29,22 @@ export class UsersController {
     const result = await this.usersService.userSignUp(body);
     return new BaseSignUpResDto(message.userSignUp, result);
 
+  }
+
+  @Get('verifyEmail/:token')
+  @ApiOkResponse({ type: BaseVerifyEmailResDto })
+  @ApiOperation({
+    summary: 'User Verfied',
+    description: 'User Verified',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User Verified',
+    type: BaseVerifyEmailResDto
+  })
+  async verifyEmail(@Param('token') token: string): Promise<BaseVerifyEmailResDto> {
+    const result = await this.usersService.verifyEmail(token);
+    return new BaseVerifyEmailResDto(message.verifyEmail, result);
   }
 
   @Post('resend-verification-email')
