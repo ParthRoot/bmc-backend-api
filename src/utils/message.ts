@@ -5,4 +5,5 @@ export const message = {
     userProfileNotExist: 'user not exist',
     forgetPassword: 'please check your mail',
     resetPassword: 'reset password successfully',
+    verifyEmail: 'Email has been Verify Successfully'
 };

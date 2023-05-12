@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 
-
 export class BaseResDto<T> {
     @ApiProperty({
         name: 'message',
@@ -18,20 +17,17 @@ export class BaseResDto<T> {
     })
     is_error: boolean;
 
-    @ApiProperty({
-        name: 'Data',
-        description: 'data',
-        type: 'any',
-        required: false
-    })
-    data: T;
+  @ApiProperty({
+    name: 'Data',
+    description: 'data',
+    type: 'any',
+    required: false,
+  })
+  data: T;
 
-    constructor(
-        message,
-        data
-    ) {
-        this.message = message;
-        this.is_error = false;
-        this.data = data;
-    }
+  constructor(message, data) {
+    this.message = message;
+    this.is_error = false;
+    this.data = data;
+  }
 }
