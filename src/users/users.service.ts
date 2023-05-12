@@ -158,7 +158,7 @@ export class UsersService {
     const expiry = moment().add(1, 'day').toDate();
     const newJwtToken = jwtSignForEmailVerification({
       email: user.email,
-      id: user.id,
+      userId: user.id,
     });
     const token = await this.tokenRepository.create();
     token.user = user;
@@ -209,11 +209,6 @@ export class UsersService {
     try {
       const verifyToken = emailVerify(token) as VerifyEmailTokenPayload;
 
-      const resVerifyToken = {
-        email: verifyToken.email,
-        user_id: verifyToken.id,
-      };
-
       const userExists = await this.checkUserAvailableViaEmail(
         verifyToken.email,
       );
@@ -229,7 +224,7 @@ export class UsersService {
       userExists.is_verified = true;
       await this.updateUser(userExists);
 
-      await this.deleteExpiredEmailVerificationToken(resVerifyToken.user_id);
+      await this.deleteExpiredEmailVerificationToken(verifyToken.userId);
 
       return new VerifyEmailResDto(userExists);
     } catch (error) {

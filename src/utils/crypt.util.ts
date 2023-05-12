@@ -49,7 +49,7 @@ export interface Sha512Interface {
 
 export interface VerifyEmailTokenPayload {
   email: string;
-  id: string;
+  userId: string;
 }
 
 export const jwtRefreshSign = (data: object) => {
