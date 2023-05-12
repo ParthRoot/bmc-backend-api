@@ -10,7 +10,7 @@ import {
   UserRepository,
 } from 'src/db/repository';
 import {
-  TokanPayload,
+  VerifyEmailTokenPayload,
   comparePassword,
   emailVerify,
   generateSaltAndHash,
@@ -25,7 +25,7 @@ import {
   VerifyEmailResDto,
 } from './common/dto/res';
 
-import moment from 'moment';
+const moment = require('moment');
 
 export class UserError extends Error {
   constructor(message: string) {
@@ -154,6 +154,7 @@ export class UsersService {
     attempts: number,
   ) {
     const curreTime = moment().toDate();
+    console.log(curreTime);
     const expiry = moment().add(1, 'day').toDate();
     const newJwtToken = jwtSignForEmailVerification({
       email: user.email,
@@ -206,7 +207,12 @@ export class UsersService {
    */
   async verifyEmail(token: string): Promise<VerifyEmailResDto> {
     try {
-      const verifyToken = emailVerify(token) as TokanPayload;
+      const verifyToken = emailVerify(token) as VerifyEmailTokenPayload;
+
+      const resVerifyToken = {
+        email: verifyToken.email,
+        user_id: verifyToken.id,
+      };
 
       const userExists = await this.checkUserAvailableViaEmail(
         verifyToken.email,
@@ -223,7 +229,7 @@ export class UsersService {
       userExists.is_verified = true;
       await this.updateUser(userExists);
 
-      await this.deleteExpiredEmailVerificationToken(verifyToken.id);
+      await this.deleteExpiredEmailVerificationToken(resVerifyToken.user_id);
 
       return new VerifyEmailResDto(userExists);
     } catch (error) {

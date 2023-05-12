@@ -47,9 +47,9 @@ export interface Sha512Interface {
   passwordHash: string;
 }
 
-export interface TokanPayload {
-  id: string;
+export interface VerifyEmailTokenPayload {
   email: string;
+  id: string;
 }
 
 export const jwtRefreshSign = (data: object) => {
