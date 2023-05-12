@@ -18,7 +18,11 @@ import {
   jwtSign,
   jwtSignForEmailVerification,
 } from 'src/utils';
-import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
+import {
+  ChangePasswordReqDto,
+  UsersLoginReqDto,
+  UsersSignUpReqDto,
+} from './common/dto/req';
 import {
   UsersCreateResDto,
   UsersLoginResDto,
@@ -286,7 +290,10 @@ export class UsersService {
         throw new Error('User is not active, please contact admin');
       }
 
-      const isPasswordValid = comparePassword(password, user.password_hash);
+      const isPasswordValid = await comparePassword(
+        password,
+        user.password_hash,
+      );
 
       if (!isPasswordValid) {
         throw new Error('Please enter correct password');
@@ -303,6 +310,42 @@ export class UsersService {
     } catch (error) {
       console.error('An error occurred while logging in the user: ', error);
       throw new Error(error.message);
+    }
+  }
+
+  async changePassword(data: ChangePasswordReqDto, reqData) {
+    try {
+      const userExists = await this.checkUserAvailableViaEmail(
+        reqData.user.email,
+      );
+
+      if (!userExists) {
+        throw new Error('User not found');
+      }
+
+      if (!userExists.is_verified) {
+        throw new Error('User is not verified');
+      }
+
+      if (!userExists.is_active) {
+        throw new Error('User is not active, please contact admin');
+      }
+
+      const isPasswordValid = await comparePassword(
+        data.oldPassword,
+        userExists.password_hash,
+      );
+
+      if (!isPasswordValid) {
+        throw new Error('Please enter your correct password');
+      }
+
+      const passHash = await generateSaltAndHash(data.newPassword);
+
+      userExists.password_hash = passHash.passwordHash;
+      await this.updateUser(userExists);
+    } catch (error) {
+      throw new Error(`${error.message}`);
     }
   }
 }

@@ -6,3 +6,4 @@ export * from './user-create.res.dto';
 export * from './base-signup.res.dto';
 export * from './base-verify-email.res.dto';
 export * from './verify-email.res.dto';
+export * from './base-change-password.res.dto';
