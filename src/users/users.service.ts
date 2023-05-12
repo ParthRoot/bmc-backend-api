@@ -4,7 +4,7 @@ import { TokenType } from 'src/db/entity/token.entity';
 import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
 import { comparePassword, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification, otpGenerator } from 'src/utils';
 import { ResetPasswordReqDto, UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
-import { UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
+import { BaseResetPasswordResDto, UsersCreateResDto, UsersLoginResDto } from './common/dto/res';
 import { message } from 'src/utils/message';
 import { Token } from 'aws-sdk';
 
@@ -200,6 +200,18 @@ export class UsersService {
     return;
   }
 
+  async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+    try {
+      // Hash the new password before saving it to the database
+      const hashedPassword = await generateSaltAndHash(newPassword)
+      
+      // Update the user's password in the database
+      await this.userRepository.update(userId, { password_hash: hashedPassword.passwordHash });
+    } catch (e) {
+     throw e
+    }
+  }
+
   async userSignUp(payload: UsersSignUpReqDto) {
     try {
       const role = await this.assertRoleAvailable('NORMAL');
@@ -321,13 +333,30 @@ export class UsersService {
     }
   }
 
-  // async resetPassword(email: string,otp: string, newPassword: string){
-  //   try{
+  async resetPassword(email: string,otp: string, newPassword: string){
+    try{
+      const currentDate = moment().unix();
+      const user = await this.assertUserAvailableViaEmail(email);
+      const forgetPassOtp = await this.findForgetPasswordOtp(user.id);
 
-  //   }
-  //   catch(e){
-  //     throw e;
-  //   }
-  // }
+      if(!forgetPassOtp){
+        throw new Error("Otp is invalid")
+      }
+
+      if(otp !== forgetPassOtp.token){
+        throw new Error("OTP Does not match")
+      }
+
+      if(currentDate > moment(forgetPassOtp.token_expiration_date).unix){
+        throw new Error('OTP has expired');
+      }
+
+      await this.updateUserPassword(user.id, newPassword);
+
+    }
+    catch(e){
+      throw e;
+    }
+  }
   
 }

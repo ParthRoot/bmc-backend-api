@@ -85,20 +85,26 @@ export class UsersController {
     return new BaseForgetPasswordResDto(message.forgetPassword, result.token);
   }
 
-  // @Post('resetPassword')
-  // @ApiOperation({
-  //   summary: 'reset password of user',
-  //   description: 'your password reset successfully',
-  // })
-  // @ApiResponse({
-  //   status: 201,
-  //   description: 'password reset',
-  //   type: BaseResetPasswordResDto
-  // })
-  // async resetPassword(
-  //   @Body() body: ResetPasswordReqDto
-  // ): Promise<BaseResetPasswordResDto> {
-  //   const result = await this.usersService.resetPassword(body.email, body.otp, body.new_password);
-  //   return new BaseResetPasswordResDto(message.resetPassword, result);
+  @Post('resetPassword')
+  @ApiOperation({
+    summary: 'reset password of user',
+    description: 'your password reset successfully',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'password reset',
+    type: BaseResetPasswordResDto
+  })
+  async resetPassword(
+    @Body() body: ResetPasswordReqDto
+  ): Promise<BaseResetPasswordResDto> {
+    const result = await this.usersService.resetPassword(body.email, body.otp, body.new_password);
+    return new BaseResetPasswordResDto(message.resetPassword, result);
+  }
+
+  // @Post()
+  // async resetPassword(@Body() body: ResetPasswordReqDto): Promise<ResetPasswordResDto> {
+  //   await this.resetPasswordService.resetPassword(body.email, body.otp, body.newPassword);
+  //   return { message: 'Password reset successful' };
   // }
 }
