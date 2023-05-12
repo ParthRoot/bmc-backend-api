@@ -4,7 +4,7 @@ export class UsersLoginResDto {
   @ApiProperty({
     name: 'token',
     description: 'token',
-    type: 'string',
+    type: String,
     required: true,
   })
   token: string;

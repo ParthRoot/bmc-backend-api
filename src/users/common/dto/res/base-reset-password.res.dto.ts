@@ -1,12 +1,10 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UsersLoginResDto } from './users.login.res.dto';
-import { VerifyEmailResDto } from './verify-email.res.dto';
 
-export class BaseVerifyEmailResDto {
+export class BaseResetPasswordResDto {
   @ApiProperty({
     name: 'message',
     description: 'message',
-    type: 'string',
+    type: String,
     required: true,
   })
   message: string;
@@ -14,7 +12,7 @@ export class BaseVerifyEmailResDto {
   @ApiProperty({
     name: 'error',
     description: 'if error then true otherwise false',
-    type: 'boolean',
+    type: Boolean,
     required: true,
   })
   is_error: boolean;
@@ -22,14 +20,14 @@ export class BaseVerifyEmailResDto {
   @ApiProperty({
     name: 'Data',
     description: 'data',
-    type: UsersLoginResDto,
+    type: 'any',
     required: false,
   })
-  data: VerifyEmailResDto;
+  data: any;
 
   constructor(message, data) {
     this.message = message;
     this.is_error = false;
-    this.data = new VerifyEmailResDto(data);
+    this.data = data;
   }
 }
