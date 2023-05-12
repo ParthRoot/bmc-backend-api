@@ -353,7 +353,7 @@ export class UsersService {
       }
 
       if (!user.is_verified) {
-        throw new Error('User is not active, contact the admin');
+        throw new Error('User is not verified');
       }
   
       let otp = await this.findForgetPasswordOtp(user.id);
@@ -362,8 +362,11 @@ export class UsersService {
         otp = await this.generateForgetPasswordOtp(user, 1);
       } else if (currentDate > moment(otp.token_expiration_date).unix()) {
         await this.deleteExpiredForgetPasswordOtp(user.id);
-        otp = await this.generateForgetPasswordOtp(user, otp.attempts+1);
-      } 
+        otp = await this.generateForgetPasswordOtp(user, 1);
+      } else{
+        await this.deleteExpiredForgetPasswordOtp(user.id);
+        await this.generateForgetPasswordOtp(user, otp.attempts + 1);
+      }
     } catch (e) {
       throw e;
     }

@@ -1,12 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { UsersLoginResDto } from './users.login.res.dto';
 
 
 export class BaseResetPasswordResDto {
     @ApiProperty({
         name: 'message',
         description: 'message',
-        type: 'string',
+        type: String,
         required: true,
     })
     message: string;
@@ -14,7 +13,7 @@ export class BaseResetPasswordResDto {
     @ApiProperty({
         name: 'error',
         description: 'if error then true otherwise false',
-        type: 'boolean',
+        type: Boolean,
         required: true,
     })
     is_error: boolean;
@@ -22,7 +21,7 @@ export class BaseResetPasswordResDto {
     @ApiProperty({
         name: 'Data',
         description: 'data',
-        type: UsersLoginResDto,
+        type: 'any',
         required: false
     })
     data: any;

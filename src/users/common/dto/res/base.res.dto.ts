@@ -5,7 +5,7 @@ export class BaseResDto<T> {
     @ApiProperty({
         name: 'message',
         description: 'message',
-        type: 'string',
+        type: String,
         required: true,
     })
     message: string;
@@ -13,7 +13,7 @@ export class BaseResDto<T> {
     @ApiProperty({
         name: 'error',
         description: 'if error then true otherwise false',
-        type: 'boolean',
+        type: Boolean,
         required: true,
     })
     is_error: boolean;
