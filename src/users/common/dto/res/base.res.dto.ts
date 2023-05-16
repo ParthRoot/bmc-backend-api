@@ -1,21 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
 
 export class BaseResDto<T> {
-    @ApiProperty({
-        name: 'message',
-        description: 'message',
-        type: String,
-        required: true,
-    })
-    message: string;
+  @ApiProperty({
+    name: 'message',
+    description: 'message',
+    type: String,
+    required: true,
+  })
+  message: string;
 
-    @ApiProperty({
-        name: 'error',
-        description: 'if error then true otherwise false',
-        type: Boolean,
-        required: true,
-    })
-    is_error: boolean;
+  @ApiProperty({
+    name: 'error',
+    description: 'if error then true otherwise false',
+    type: Boolean,
+    required: true,
+  })
+  is_error: boolean;
 
   @ApiProperty({
     name: 'Data',

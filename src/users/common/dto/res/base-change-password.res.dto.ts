@@ -1,8 +1,7 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { UsersLoginResDto } from './users.login.res.dto';
-import { VerifyEmailResDto } from './verify-email.res.dto';
 
-export class BaseVerifyEmailResDto {
+export class BaseChangePasswordResDto {
   @ApiProperty({
     name: 'message',
     description: 'message',
@@ -25,11 +24,11 @@ export class BaseVerifyEmailResDto {
     type: UsersLoginResDto,
     required: false,
   })
-  data: VerifyEmailResDto;
+  data: any;
 
-  constructor(message, data) {
+  constructor(message) {
     this.message = message;
     this.is_error = false;
-    this.data = new VerifyEmailResDto(data);
   }
 }
+

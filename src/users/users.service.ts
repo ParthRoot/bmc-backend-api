@@ -1,13 +1,37 @@
 import { Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
-import { RoleAvaialbleError, RoleAvailableRepository, RoleRepository, TokenRepository, UserAvaialbleError, UserRepository } from 'src/db/repository';
-import { VerifyEmailTokenPayload, comparePassword, emailVerify, generateSaltAndHash, getEnv, jwtSign, jwtSignForEmailVerification, otpGenerator } from 'src/utils';
-import { UsersLoginReqDto, UsersSignUpReqDto } from './common/dto/req';
-import { UsersCreateResDto, UsersLoginResDto, VerifyEmailResDto } from './common/dto/res';
-import { message } from 'src/utils/message';
-import { clearConfigCache } from 'prettier';
+import {
+  RoleAvaialbleError,
+  RoleAvailableRepository,
+  RoleRepository,
+  TokenRepository,
+  UserAvaialbleError,
+  UserRepository,
+} from 'src/db/repository';
+import {
+  UserPayload,
+  VerifyEmailTokenPayload,
+  comparePassword,
+  emailVerify,
+  generateSaltAndHash,
+  getEnv,
+  jwtSign,
+  jwtSignForEmailVerification,
+  otpGenerator,
+} from 'src/utils';
+import {
+  ChangePasswordReqDto,
+  UsersLoginReqDto,
+  UsersSignUpReqDto,
+} from './common/dto/req';
+import {
+  UsersCreateResDto,
+  UsersLoginResDto,
+  VerifyEmailResDto,
+} from './common/dto/res';
 
+import { message } from 'src/utils/message';
 
 const moment = require('moment');
 
@@ -179,10 +203,7 @@ export class UsersService {
    * @param attempts numbr of attempts return
    * @returns otp in mail
    */
-  private async generateForgetPasswordOtp(
-    user: UserEntity,
-    attempts: number
-  ){
+  private async generateForgetPasswordOtp(user: UserEntity, attempts: number) {
     const curreTime = moment().toDate();
     const expiry = moment().add(15, 'minutes').toDate();
     const newOtp = otpGenerator(6);
@@ -200,19 +221,19 @@ export class UsersService {
     return newToken;
   }
 
-/**
- * it finds otp exist in table
- * @param userId find any otp exist
- * @returns otp
- */
+  /**
+   * it finds otp exist in table
+   * @param userId find any otp exist
+   * @returns otp
+   */
   private async findForgetPasswordOtp(userId: string) {
     const otp = await this.tokenRepository.findOne({
       where: {
         user: {
-          id: userId
+          id: userId,
         },
-        token_type: TokenType.ForgotPassword
-      }
+        token_type: TokenType.ForgotPassword,
+      },
     });
 
     if (!otp) {
@@ -221,17 +242,17 @@ export class UsersService {
     return otp;
   }
 
-/**
- * it delete expired otp in token table
- * @param userId delete expired otp
- * @returns delete otp
- */
+  /**
+   * it delete expired otp in token table
+   * @param userId delete expired otp
+   * @returns delete otp
+   */
   private async deleteExpiredForgetPasswordOtp(userId: string) {
     await this.tokenRepository.delete({
       user: {
-        id: userId
+        id: userId,
       },
-      token_type: TokenType.ForgotPassword
+      token_type: TokenType.ForgotPassword,
     });
     return;
   }
@@ -241,15 +262,20 @@ export class UsersService {
    * @param userId  update new password
    * @param newPassword generate new password
    */
-  private async updateUserPassword(userId: string, newPassword: string): Promise<void> {
+  private async updateUserPassword(
+    userId: string,
+    newPassword: string,
+  ): Promise<void> {
     try {
       // Hash the new password before saving it to the database
-      const hashedPassword = await generateSaltAndHash(newPassword)
-      
+      const hashedPassword = await generateSaltAndHash(newPassword);
+
       // Update the user's password in the database
-      await this.userRepository.update(userId, { password_hash: hashedPassword.passwordHash });
+      await this.userRepository.update(userId, {
+        password_hash: hashedPassword.passwordHash,
+      });
     } catch (e) {
-     throw e
+      throw e;
     }
   }
 
@@ -366,29 +392,70 @@ export class UsersService {
         throw new Error('User is not active, please contact admin');
       }
 
-      const isPasswordValid =await comparePassword(password, user.password_hash);
+      const isPasswordValid = await comparePassword(
+        password,
+        user.password_hash,
+      );
 
       if (!isPasswordValid) {
         throw new Error('Please enter correct password');
-      }
-      else{
-        const data = { id: user.id, email: user.email, role: user.role[0].role.name };
+      } else {
+        const data = {
+          id: user.id,
+          email: user.email,
+          role: user.role[0].role.name,
+        };
         const token = jwtSign(data);
-  
+
         return new UsersLoginResDto(token);
       }
-     
     } catch (error) {
       console.error('An error occurred while logging in the user: ', error);
       throw new Error(error.message);
     }
   }
 
-  async forgetPassword(email: string ) {
+  async changePassword(data: ChangePasswordReqDto, user: UserPayload) {
+    try {
+      const userExists = await this.checkUserAvailableViaEmail(
+        user.email,
+      );
+
+      if (!userExists) {
+        throw new Error('User not found');
+      }
+
+      if (!userExists.is_verified) {
+        throw new Error('User is not verified');
+      }
+
+      if (!userExists.is_active) {
+        throw new Error('User is not active, please contact admin');
+      }
+
+      const isPasswordValid = await comparePassword(
+        data.oldPassword,
+        userExists.password_hash,
+      );
+
+      if (!isPasswordValid) {
+        throw new Error('Please enter your correct password');
+      }
+
+      const passHash = await generateSaltAndHash(data.newPassword);
+
+      userExists.password_hash = passHash.passwordHash;
+      await this.updateUser(userExists);
+    } catch (error) {
+      throw new Error(`${error.message}`);
+    }
+  }
+
+  async forgetPassword(email: string) {
     try {
       const currentDate = moment().unix();
       const user = await this.assertUserAvailableViaEmail(email);
-  
+
       if (!user.is_active) {
         throw new Error('User is not active, contact the admin');
       }
@@ -396,15 +463,15 @@ export class UsersService {
       if (!user.is_verified) {
         throw new Error('User is not verified');
       }
-  
+
       let otp = await this.findForgetPasswordOtp(user.id);
-  
+
       if (otp === false) {
         otp = await this.generateForgetPasswordOtp(user, 1);
       } else if (currentDate > moment(otp.token_expiration_date).unix()) {
         await this.deleteExpiredForgetPasswordOtp(user.id);
         otp = await this.generateForgetPasswordOtp(user, 1);
-      } else{
+      } else {
         await this.deleteExpiredForgetPasswordOtp(user.id);
         await this.generateForgetPasswordOtp(user, otp.attempts + 1);
       }
@@ -413,31 +480,28 @@ export class UsersService {
     }
   }
 
-  async resetPassword(email: string,otp: string, newPassword: string){
-    try{
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    try {
       const currentDate = moment().unix();
       const user = await this.assertUserAvailableViaEmail(email);
       const forgetPassOtp = await this.findForgetPasswordOtp(user.id);
 
-      if(!forgetPassOtp){
-        throw new Error("Otp is invalid")
+      if (!forgetPassOtp) {
+        throw new Error('Otp is invalid');
       }
 
-      if(otp !== forgetPassOtp.token){
-        throw new Error("OTP Does not match")
+      if (otp !== forgetPassOtp.token) {
+        throw new Error('OTP Does not match');
       }
 
-      if(currentDate > moment(forgetPassOtp.token_expiration_date).unix()){
+      if (currentDate > moment(forgetPassOtp.token_expiration_date).unix()) {
         throw new Error('OTP has expired');
       }
 
       await this.updateUserPassword(user.id, newPassword);
       await this.deleteExpiredForgetPasswordOtp(user.id);
-
-    }
-    catch(e){
+    } catch (e) {
       throw e;
     }
   }
-  
 }

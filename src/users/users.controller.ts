@@ -1,20 +1,45 @@
-import { Controller, Get, Post, Body, Type, Param } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  UseGuards,
+  Req,
+} from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.req.dto';
-import { ApiOperation, ApiResponse, ApiTags,  ApiOkResponse } from '@nestjs/swagger';
-import { BaseForgetPasswordResDto, BaseSignUpResDto, UsersLoginResDto,  BaseResDto, BaseVerifyEmailResDto} from './common/dto/res';
-import {} from './common/dto/res';
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import {
+  BaseChangePasswordResDto,
+  BaseSignUpResDto,
+  BaseVerifyEmailResDto,
+  BaseEmailVerificationResendResDto,
+  BaseForgetPasswordResDto,
+  BaseLoginResDto,
+  BaseResetPasswordResDto,
+} from './common/dto/res';
 import { message } from 'src/utils/message';
-import { ForgetPasswordReqDto, ResendEmailVerificationReqDto, UsersSignUpReqDto } from './common/dto/req';
-import { BaseLoginResDto } from './common/dto/res/base-login.res.dto';
-import { BaseEmailVerificationResendResDto } from './common/dto/res/base-email-verification-resend.res.dto';
-import { ResetPasswordReqDto } from './common/dto/req/reset-password.req.dto';
-import { BaseResetPasswordResDto } from './common/dto/res/base-reset-password.res.dto';
+import {
+  ChangePasswordReqDto,
+  ResendEmailVerificationReqDto,
+  UsersSignUpReqDto,
+  ForgetPasswordReqDto,
+  ResetPasswordReqDto,
+} from './common/dto/req';
+
+import { AuthGuard, AvailableRoleEnum, RoleGuard, UserPayload } from 'src/utils';
+import { User } from 'src/utils/decorators';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) { }
+  constructor(private readonly usersService: UsersService) {}
 
   @Post('signup')
   @ApiOperation({
@@ -24,14 +49,11 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'User SignUp',
-    type: BaseSignUpResDto
+    type: BaseSignUpResDto,
   })
-  async userSignUp(
-    @Body() body: UsersSignUpReqDto
-  ): Promise<BaseSignUpResDto> {
+  async userSignUp(@Body() body: UsersSignUpReqDto): Promise<BaseSignUpResDto> {
     const result = await this.usersService.userSignUp(body);
     return new BaseSignUpResDto(message.userSignUp, result);
-
   }
 
   @Get('verifyEmail/:token')
@@ -43,9 +65,11 @@ export class UsersController {
   @ApiResponse({
     status: 200,
     description: 'User Verified',
-    type: BaseVerifyEmailResDto
+    type: BaseVerifyEmailResDto,
   })
-  async verifyEmail(@Param('token') token: string): Promise<BaseVerifyEmailResDto> {
+  async verifyEmail(
+    @Param('token') token: string,
+  ): Promise<BaseVerifyEmailResDto> {
     const result = await this.usersService.verifyEmail(token);
     return new BaseVerifyEmailResDto(message.verifyEmail, result);
   }
@@ -58,13 +82,16 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'User Email Verification Resend.',
-    type: BaseEmailVerificationResendResDto
+    type: BaseEmailVerificationResendResDto,
   })
   async resendEmailVerification(
-    @Body() body: ResendEmailVerificationReqDto
+    @Body() body: ResendEmailVerificationReqDto,
   ): Promise<BaseEmailVerificationResendResDto> {
     const result = await this.usersService.resendEmailVerification(body.email);
-    return new BaseEmailVerificationResendResDto(message.resendEmailVerification, {});
+    return new BaseEmailVerificationResendResDto(
+      message.resendEmailVerification,
+      {},
+    );
   }
 
   @Post('login')
@@ -75,13 +102,32 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'User login successful',
-    type: BaseLoginResDto
+    type: BaseLoginResDto,
   })
   async userLogin(
-    @Body() userloginDto: UsersLoginReqDto
+    @Body() userloginDto: UsersLoginReqDto,
   ): Promise<BaseLoginResDto> {
     const result = await this.usersService.loginUser(userloginDto);
     return new BaseLoginResDto(message.loginUser, result.token);
+  }
+
+  @Post('changePassword')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'change password',
+    description: 'update user password',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Password change',
+    type: BaseChangePasswordResDto,
+  })
+  async changePassword(
+    @Body() data: ChangePasswordReqDto,
+    @User() user: UserPayload,
+  ): Promise<BaseChangePasswordResDto> {
+    await this.usersService.changePassword(data, user);
+    return new BaseChangePasswordResDto(message.changePassword);
   }
 
   @Post('forgetPassword')
@@ -92,10 +138,10 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'send otp in mail successful',
-    type: BaseForgetPasswordResDto
+    type: BaseForgetPasswordResDto,
   })
   async forgetPassword(
-    @Body() body: ForgetPasswordReqDto
+    @Body() body: ForgetPasswordReqDto,
   ): Promise<BaseForgetPasswordResDto> {
     const result = await this.usersService.forgetPassword(body.email);
     return new BaseForgetPasswordResDto(message.forgetPassword, result);
@@ -109,13 +155,16 @@ export class UsersController {
   @ApiResponse({
     status: 201,
     description: 'password reset',
-    type: BaseResetPasswordResDto
+    type: BaseResetPasswordResDto,
   })
   async resetPassword(
-    @Body() body: ResetPasswordReqDto
+    @Body() body: ResetPasswordReqDto,
   ): Promise<BaseResetPasswordResDto> {
-    const result = await this.usersService.resetPassword(body.email, body.otp, body.new_password);
+    const result = await this.usersService.resetPassword(
+      body.email,
+      body.otp,
+      body.new_password,
+    );
     return new BaseResetPasswordResDto(message.resetPassword, result);
   }
-
 }
