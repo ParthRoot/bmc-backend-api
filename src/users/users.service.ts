@@ -10,6 +10,7 @@ import {
   UserRepository,
 } from 'src/db/repository';
 import {
+  UserPayload,
   VerifyEmailTokenPayload,
   comparePassword,
   emailVerify,
@@ -414,7 +415,7 @@ export class UsersService {
     }
   }
 
-  async changePassword(data: ChangePasswordReqDto, user) {
+  async changePassword(data: ChangePasswordReqDto, user: UserPayload) {
     try {
       const userExists = await this.checkUserAvailableViaEmail(
         user.email,
