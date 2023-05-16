@@ -110,7 +110,7 @@ export class UsersController {
     return new BaseLoginResDto(message.loginUser, result.token);
   }
 
-  @UseGuards(new AuthGuard(), new RoleGuard(AvailableRoleEnum.NORMAL))
+  @UseGuards(new AuthGuard())
   @Post('changePassword')
   @ApiOperation({
     summary: 'change password',
