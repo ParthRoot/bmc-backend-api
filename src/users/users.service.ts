@@ -414,10 +414,10 @@ export class UsersService {
     }
   }
 
-  async changePassword(data: ChangePasswordReqDto, reqData) {
+  async changePassword(data: ChangePasswordReqDto, user) {
     try {
       const userExists = await this.checkUserAvailableViaEmail(
-        reqData.user.email,
+        user.email,
       );
 
       if (!userExists) {

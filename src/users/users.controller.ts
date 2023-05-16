@@ -33,7 +33,8 @@ import {
   ResetPasswordReqDto,
 } from './common/dto/req';
 
-import { AuthGuard, AvailableRoleEnum, RoleGuard } from 'src/utils';
+import { AuthGuard, AvailableRoleEnum, RoleGuard, UserPayload } from 'src/utils';
+import { User } from 'src/utils/decorators';
 
 @ApiTags('users')
 @Controller('users')
@@ -123,11 +124,12 @@ export class UsersController {
   })
   async changePassword(
     @Body() data: ChangePasswordReqDto,
-    @Req() reqData,
+    @User() user: UserPayload,
   ): Promise<BaseChangePasswordResDto> {
-    await this.usersService.changePassword(data, reqData);
+    await this.usersService.changePassword(data, user);
     return new BaseChangePasswordResDto(message.changePassword);
   }
+
   @Post('forgetPassword')
   @ApiOperation({
     summary: 'forget password of user',

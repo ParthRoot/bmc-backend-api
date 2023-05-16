@@ -31,3 +31,4 @@ export class BaseChangePasswordResDto {
     this.is_error = false;
   }
 }
+
