@@ -286,6 +286,11 @@ export class UsersService {
     }
   }
 
+  /**
+   * 
+   * @param payload 
+   * @returns 
+   */
   async userSignUp(payload: UsersSignUpReqDto) {
     try {
       const role = await this.assertRoleAvailable('NORMAL');
@@ -512,6 +517,7 @@ export class UsersService {
     }
   }
 
+
   getGoogleAuthURL() {
     const rootUrl = process.env.ROOT_URL;
     const redirectUrl = process.env.REDIRECT_URL;
@@ -538,7 +544,12 @@ export class UsersService {
     process.env.REDIRECT_URL
   );
 
-  // Function to fetch Google user information
+  /**
+   * Function to fetch Google user information
+   * @param accessToken 
+   * @param idToken 
+   * @returns google user info
+   */
   async fetchGoogleUserInfo(accessToken, idToken) {
     const url = `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`;
 
@@ -551,7 +562,10 @@ export class UsersService {
     return response.data;
   }
 
-  // Function to create a user from Google data
+  /**
+   * Function to create a user from Google data
+   * @param googleUser 
+   */
   async createUserFromGoogle(googleUser) {
     const user = this.userRepository.create({
       email: googleUser.email,
@@ -571,7 +585,11 @@ export class UsersService {
     await this.roleRepository.save(assign);
   }
 
-  // Function to get user by email with role information
+  /**
+   * Function to get user by email with role information
+   * @param email 
+   * @returns user id, email and role
+   */
   async getUserByEmailWithRole(email) {
     const user = await this.userRepository.findOne({
       where: { email },
@@ -585,7 +603,11 @@ export class UsersService {
     };
   }
 
-  // Function to generate token
+  /**
+   * Function to generate token
+   * @param user 
+   * @returns token
+   */
   generateToken(user) {
     const data = {
       id: user.id,
@@ -597,12 +619,18 @@ export class UsersService {
     return token;
   }
 
+  /**
+   * 
+   * @param code 
+   * @returns login jwt token
+   */
   async getGoogleUser(code) {
     try {
       const { tokens } = await this.oauth2Client.getToken(code);
       const { access_token, id_token } = tokens;
 
       const googleUser = await this.fetchGoogleUserInfo(access_token, id_token);
+      console.log("googleUser: ", googleUser);
       const userExists = await this.checkUserAvailableViaEmail(googleUser.email);
 
       if (!userExists) {
