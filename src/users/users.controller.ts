@@ -6,6 +6,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Query,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UsersLoginReqDto } from './common/dto/req/users.login.req.dto';
@@ -23,6 +24,8 @@ import {
   BaseForgetPasswordResDto,
   BaseLoginResDto,
   BaseResetPasswordResDto,
+  BaseGetGoogleUserResDto,
+  BaseGetGoogleAuthUrlResDto,
 } from './common/dto/res';
 import { message } from 'src/utils/message';
 import {
@@ -35,11 +38,12 @@ import {
 
 import { AuthGuard, AvailableRoleEnum, RoleGuard, UserPayload } from 'src/utils';
 import { User } from 'src/utils/decorators';
+import { GetGoogleUserReqDto } from './common/query';
 
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post('signup')
   @ApiOperation({
@@ -167,4 +171,20 @@ export class UsersController {
     );
     return new BaseResetPasswordResDto(message.resetPassword, result);
   }
+
+  @Get('google')
+  async getGoogleAuthURL(): Promise<BaseGetGoogleAuthUrlResDto> {
+    const result = await this.usersService.getGoogleAuthURL();
+
+    return new BaseGetGoogleAuthUrlResDto(message.getGoogleUrl, result);
+  }
+
+  @Get('callback')
+  async getGoogleUser(@Query() data: GetGoogleUserReqDto): Promise<BaseGetGoogleUserResDto> {
+    console.log("Data", data);
+    const result = await this.usersService.getGoogleUser(data);
+    console.log("result", result);
+    return new BaseGetGoogleUserResDto(message.getGoogleUser, result);
+  }
+
 }

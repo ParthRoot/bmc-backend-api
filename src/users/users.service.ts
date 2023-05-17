@@ -33,6 +33,13 @@ import {
 
 import { message } from 'src/utils/message';
 
+// import querystring from 'querystring';
+const querystring = require('querystring');
+
+import { google } from 'googleapis';
+import axios from 'axios';
+import { GetGoogleUserReqDto } from './common/query';
+
 const moment = require('moment');
 
 export class UserError extends Error {
@@ -48,7 +55,7 @@ export class UsersService {
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
     private readonly roleAvailableRepository: RoleAvailableRepository,
-  ) {}
+  ) { }
 
   /**
    * It will check that role is available in the database
@@ -502,6 +509,112 @@ export class UsersService {
       await this.deleteExpiredForgetPasswordOtp(user.id);
     } catch (e) {
       throw e;
+    }
+  }
+
+  getGoogleAuthURL() {
+    const rootUrl = process.env.ROOT_URL;
+    const redirectUrl = process.env.REDIRECT_URL;
+    const clientId = process.env.CLIENT_ID;
+
+    const options = {
+      redirect_uri: redirectUrl,
+      client_id: clientId,
+      access_type: 'offline',
+      response_type: 'code',
+      prompt: 'consent',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ].join(' '),
+    };
+
+    return `${rootUrl}?${querystring.stringify(options)}`;
+  }
+
+  oauth2Client = new google.auth.OAuth2(
+    process.env.CLIENT_ID,
+    process.env.SECRET,
+    process.env.REDIRECT_URL
+  );
+
+  // Function to fetch Google user information
+  async fetchGoogleUserInfo(accessToken, idToken) {
+    const url = `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    return response.data;
+  }
+
+  // Function to create a user from Google data
+  async createUserFromGoogle(googleUser) {
+    const user = this.userRepository.create({
+      email: googleUser.email,
+      name: googleUser.name,
+      avatar: googleUser.picture || null,
+      is_verified: googleUser.verified_email,
+    });
+
+    const saveUser = await this.userRepository.save(user);
+    const role = await this.assertRoleAvailable('NORMAL');
+
+    const assign = this.roleRepository.create({
+      user: saveUser,
+      role: role,
+    });
+
+    await this.roleRepository.save(assign);
+  }
+
+  // Function to get user by email with role information
+  async getUserByEmailWithRole(email) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: { role: { role: true } },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role[0].role.name,
+    };
+  }
+
+  // Function to generate token
+  generateToken(user) {
+    const data = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = jwtSign(data);
+    return token;
+  }
+
+  async getGoogleUser(code) {
+    try {
+      const { tokens } = await this.oauth2Client.getToken(code);
+      const { access_token, id_token } = tokens;
+
+      const googleUser = await this.fetchGoogleUserInfo(access_token, id_token);
+      const userExists = await this.checkUserAvailableViaEmail(googleUser.email);
+
+      if (!userExists) {
+        await this.createUserFromGoogle(googleUser);
+      }
+
+      const user = await this.getUserByEmailWithRole(googleUser.email);
+      const token = this.generateToken(user);
+
+      return token;
+    } catch (err) {
+      throw new Error(`${err.message}`);
     }
   }
 }
