@@ -48,7 +48,7 @@ export class UsersService {
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
     private readonly roleAvailableRepository: RoleAvailableRepository,
-  ) {}
+  ) { }
 
   /**
    * It will check that role is available in the database

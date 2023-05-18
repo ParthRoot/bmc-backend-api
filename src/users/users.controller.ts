@@ -39,7 +39,7 @@ import { User } from 'src/utils/decorators';
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) { }
 
   @Post('signup')
   @ApiOperation({
