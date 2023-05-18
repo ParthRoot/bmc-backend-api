@@ -571,6 +571,7 @@ export class UsersService {
       email: googleUser.email,
       name: googleUser.name,
       avatar: googleUser.picture || null,
+      social_id: googleUser.id,
       is_verified: googleUser.verified_email,
     });
 
