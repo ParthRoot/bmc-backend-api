@@ -17,10 +17,6 @@ export class UserEntity {
     @PrimaryGeneratedColumn('uuid')
     id!: string;
 
-    @Index('IDX_UQ_social_id', { unique: true })
-    @Column({ type: 'varchar', nullable: true })
-    social_id!: string;
-
     @Index('IDX_UQ_user_email', { unique: true })
     @Column({ type: 'varchar', length: 300, nullable: true })
     email!: string;

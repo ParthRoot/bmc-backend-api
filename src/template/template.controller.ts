@@ -1,18 +1,50 @@
-import { Controller, Get } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
 import { TemplateService } from './template.service';
-
+import {
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+  ApiOkResponse,
+} from '@nestjs/swagger';
+import { BaseSaveTemplateResDto } from './common/dto/res';
+import { SaveTemplateReqDto } from './common/dto/req';
+import { message } from 'src/utils/message';
+import { AuthGuard, UserPayload } from 'src/utils';
+import { User } from 'src/utils/decorators';
 @Controller('template')
 export class TemplateController {
   constructor(private readonly templateService: TemplateService) { };
 
-  @Get('getTemp')
-  async getTemp() {
-    const result = await this.templateService.tempTemplate();
-    return {
-      data: {
-        code: result,
-      },
-      message: 'works',
-    };
+  @Post('savetemplate/:id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'User save template',
+    description: 'save templete.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User sved template',
+    type: BaseSaveTemplateResDto,
+  })
+  async saveTemplate(@Body() data: SaveTemplateReqDto,
+   @Param('id') templateid: string,
+   @User() user: UserPayload): Promise<BaseSaveTemplateResDto> {
+    const result = await this.templateService.saveTemplate(data, user.id, templateid);
+    return new BaseSaveTemplateResDto(message.templateSave, result);
   }
+
+  // @Post('getsavetemplate')
+  // @ApiOperation({
+  //   summary: 'User get save template',
+  //   description: 'get save templete.',
+  // })
+  // @ApiResponse({
+  //   status: 201,
+  //   description: 'User get template',
+  //   type: BaseSaveTemplateResDto,
+  // })
+  // async getsaveTemplate(): Promise<BaseSaveTemplateResDto> {
+  //   const result = await this.templateService.getsaveTemplate();
+  //   return new BaseSaveTemplateResDto(message.getSavetemplate,result);
+  // }
 }
