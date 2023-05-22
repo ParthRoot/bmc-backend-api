@@ -75,6 +75,10 @@ export class TemplateService {
           }
         }
 
+        /**
+         * it will delete saveTemplate by id
+         * @param id savetemplate id
+         */
         async deleteSaveTemplate(id :string){
           try {
             const template = await this.saveTemplateRepository.findOne({
@@ -113,7 +117,4 @@ export class TemplateService {
             throw err;
           }
         }
-
-
-        
 }
