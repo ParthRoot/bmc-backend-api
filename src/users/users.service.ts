@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
 import {
@@ -31,8 +31,13 @@ import {
   VerifyEmailResDto,
 } from './common/dto/res';
 
-import { message } from 'src/utils/message';
 
+import axios from 'axios';
+import { message } from 'src/utils/message';
+import { OAuth2Client } from 'google-auth-library';
+
+// import querystring from 'querystring';
+const querystring = require('querystring');
 const moment = require('moment');
 
 export class UserError extends Error {
@@ -44,11 +49,12 @@ export class UserError extends Error {
 @Injectable()
 export class UsersService {
   constructor(
+    @Inject('GOOGLE_AUTH') private readonly googleAuth: OAuth2Client,
     private readonly tokenRepository: TokenRepository,
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
     private readonly roleAvailableRepository: RoleAvailableRepository,
-  ) {}
+  ) { }
 
   /**
    * It will check that role is available in the database
@@ -279,6 +285,11 @@ export class UsersService {
     }
   }
 
+  /**
+   * 
+   * @param payload 
+   * @returns 
+   */
   async userSignUp(payload: UsersSignUpReqDto) {
     try {
       const role = await this.assertRoleAvailable('NORMAL');
@@ -502,6 +513,132 @@ export class UsersService {
       await this.deleteExpiredForgetPasswordOtp(user.id);
     } catch (e) {
       throw e;
+    }
+  }
+
+
+  async getGoogleAuthURL() {
+    const rootUrl = getEnv('ROOT_URL');
+    const redirectUrl = getEnv('REDIRECT_URL');
+    const clientId = getEnv('CLIENT_ID');
+
+    const options = {
+      redirect_uri: redirectUrl,
+      client_id: clientId,
+      access_type: 'offline',
+      response_type: 'code',
+      prompt: 'consent',
+      scope: [
+        'https://www.googleapis.com/auth/userinfo.profile',
+        'https://www.googleapis.com/auth/userinfo.email',
+      ].join(' '),
+    };
+
+    return `${rootUrl}?${querystring.stringify(options)}`;
+  }
+
+
+
+  /**
+   * Function to fetch Google user information
+   * @param accessToken 
+   * @param idToken 
+   * @returns google user info
+   */
+  async fetchGoogleUserInfo(accessToken, idToken) {
+    const url = `https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${accessToken}`;
+
+    const response = await axios.get(url, {
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Function to create a user from Google data
+   * @param googleUser 
+   */
+  async createUserFromGoogle(googleUser) {
+    const user = this.userRepository.create({
+      email: googleUser.email,
+      name: googleUser.name,
+      avatar: googleUser.picture || null,
+      social_id: googleUser.id,
+      is_verified: googleUser.verified_email,
+    });
+
+    const saveUser = await this.userRepository.save(user);
+    const role = await this.assertRoleAvailable('NORMAL');
+
+    const assign = this.roleRepository.create({
+      user: saveUser,
+      role: role,
+    });
+
+    await this.roleRepository.save(assign);
+  }
+
+  /**
+   * Function to get user by email with role information
+   * @param email 
+   * @returns user id, email and role
+   */
+  async getUserByEmailWithRole(email) {
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: { role: { role: true } },
+    });
+
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role[0].role.name,
+    };
+  }
+
+  /**
+   * Function to generate token
+   * @param user 
+   * @returns token
+   */
+  generateToken(user) {
+    const data = {
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    };
+
+    const token = jwtSign(data);
+    return token;
+  }
+
+  /**
+   * 
+   * @param code 
+   * @returns login jwt token
+   */
+  async getGoogleUser(code) {
+    try {
+      const { tokens } = await this.googleAuth.getToken(code);
+      const { access_token, id_token } = tokens;
+
+      const googleUser = await this.fetchGoogleUserInfo(access_token, id_token);
+      console.log("googleUser: ", googleUser);
+      const userExists = await this.checkUserAvailableViaEmail(googleUser.email);
+
+      if (!userExists) {
+        await this.createUserFromGoogle(googleUser);
+      }
+
+      const user = await this.getUserByEmailWithRole(googleUser.email);
+      const token = this.generateToken(user);
+
+      return token;
+    } catch (err) {
+      throw new Error(`${err.message}`);
     }
   }
 }
