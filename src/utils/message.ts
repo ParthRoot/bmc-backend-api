@@ -8,4 +8,5 @@ export const message = {
   userProfileNotExist: 'user not exist',
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
+  listTemplate: 'list template successfully'
 };

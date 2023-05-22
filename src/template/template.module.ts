@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TemplateController } from './template.controller';
 import { TemplateService } from './template.service';
 import { RoleAvailableRepository, RoleRepository, TokenRepository, UserRepository } from 'src/db/repository';
+import { SaveTemplateRepository, TemplateRepository } from 'src/db/repository/template';
 
 
 @Module({
@@ -9,6 +10,9 @@ import { RoleAvailableRepository, RoleRepository, TokenRepository, UserRepositor
   providers: [TemplateService, TokenRepository,
     UserRepository,
     RoleRepository,
-    RoleAvailableRepository]
+    RoleAvailableRepository,
+    TemplateRepository,
+    SaveTemplateRepository
+  ]
 })
 export class TemplateModule { }
