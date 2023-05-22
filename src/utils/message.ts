@@ -8,6 +8,6 @@ export const message = {
   userProfileNotExist: 'user not exist',
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
-  getGoogleUser: 'getting goog user successfully',
+  getGoogleUser: 'getting google user successfully',
   getGoogleUrl: 'getting google url successfully'
 };

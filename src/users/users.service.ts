@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { UserEntity } from 'src/db/entity';
 import { TokenType } from 'src/db/entity/token.entity';
 import {
@@ -31,15 +31,13 @@ import {
   VerifyEmailResDto,
 } from './common/dto/res';
 
+
+import axios from 'axios';
 import { message } from 'src/utils/message';
+import { OAuth2Client } from 'google-auth-library';
 
 // import querystring from 'querystring';
 const querystring = require('querystring');
-
-import { google } from 'googleapis';
-import axios from 'axios';
-import { GetGoogleUserQueryDto } from './common/query';
-
 const moment = require('moment');
 
 export class UserError extends Error {
@@ -51,6 +49,7 @@ export class UserError extends Error {
 @Injectable()
 export class UsersService {
   constructor(
+    @Inject('GOOGLE_AUTH') private readonly googleAuth: OAuth2Client,
     private readonly tokenRepository: TokenRepository,
     private readonly userRepository: UserRepository,
     private readonly roleRepository: RoleRepository,
@@ -538,11 +537,7 @@ export class UsersService {
     return `${rootUrl}?${querystring.stringify(options)}`;
   }
 
-  oauth2Client = new google.auth.OAuth2(
-    getEnv('CLIENT_ID'),
-    getEnv('SECRET'),
-    getEnv('REDIRECT_URL'),
-  );
+
 
   /**
    * Function to fetch Google user information
@@ -627,7 +622,7 @@ export class UsersService {
    */
   async getGoogleUser(code) {
     try {
-      const { tokens } = await this.oauth2Client.getToken(code);
+      const { tokens } = await this.googleAuth.getToken(code);
       const { access_token, id_token } = tokens;
 
       const googleUser = await this.fetchGoogleUserInfo(access_token, id_token);
