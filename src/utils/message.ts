@@ -8,5 +8,6 @@ export const message = {
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
   templateSave: 'template saved',
-  getSavetemplate: 'version'
+  getSavetemplate: 'version',
+  deleteSaveTemplate: 'template deleted successfully'
 };

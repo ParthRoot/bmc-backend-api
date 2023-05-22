@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { TemplateService } from './template.service';
 import {
   ApiOperation,
@@ -11,6 +11,7 @@ import { SaveTemplateReqDto } from './common/dto/req';
 import { message } from 'src/utils/message';
 import { AuthGuard, UserPayload } from 'src/utils';
 import { User } from 'src/utils/decorators';
+import { BaseDeleteSaveTemplateResDto } from './common/dto/res/base-delete-templare.res.dto';
 @Controller('template')
 export class TemplateController {
   constructor(private readonly templateService: TemplateService) { };
@@ -47,6 +48,23 @@ export class TemplateController {
   async getsaveTemplate(): Promise<BaseSaveTemplateResDto> {
     const result = await this.templateService.getsaveTemplate();
     return new BaseSaveTemplateResDto(message.getSavetemplate,result);
+  }
+
+  @Patch('deletesavetemplate/:id')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'User will delete template',
+    description: 'delete save templete.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User delete template',
+    type: BaseDeleteSaveTemplateResDto,
+  })
+  async deleteSaveTemplate(
+    @Param('id') templateid: string): Promise<BaseDeleteSaveTemplateResDto> {
+    await this.templateService.deleteSaveTemplate(templateid);
+    return new BaseDeleteSaveTemplateResDto(message.deleteSaveTemplate,{});
   }
   
 }

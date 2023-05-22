@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { SaveTemplateRepository } from 'src/db/repository';
 import { SaveTemplateReqDto } from './common/dto/req';
 import { SaveTemplateEntity } from 'src/db/entity/saveTemplate.entity';
+import { Not } from 'typeorm';
 @Injectable()
 export class TemplateService {
     constructor(
@@ -62,8 +63,7 @@ export class TemplateService {
           try{
             const template = await this.saveTemplateRepository.find({
               where: {
-                is_deleted: false,
-                id
+                is_deleted: false
               }
             });
             if (template.length === 0) {
@@ -75,6 +75,45 @@ export class TemplateService {
           }
         }
 
-        
+        async deleteSaveTemplate(id :string){
+          try {
+            const template = await this.saveTemplateRepository.findOne({
+              where: {
+                is_deleted: false,
+                id
+              },
+            });
+          
+            if (!template) {
+              throw new Error('Template not found');
+            }
+          
+            if (template.is_current_version) {
+              const previousTemplate = await this.saveTemplateRepository.findOne({
+                where: {
+                  is_deleted: false,
+                  id: Not(id),
+                },
+                order: {
+                  created_at: 'DESC',
+                },
+              });
+          
+              if (previousTemplate) {
+                previousTemplate.is_current_version = true;
+                await this.saveTemplateRepository.save(previousTemplate);
+              }
+            }
+          
+            template.is_deleted = true;
+            template.is_current_version = false;
+            await this.saveTemplateRepository.save(template);
+          
+          }catch(err){
+            throw err;
+          }
+        }
+
+
         
 }
