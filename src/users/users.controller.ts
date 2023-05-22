@@ -38,7 +38,7 @@ import {
 
 import { AuthGuard, AvailableRoleEnum, RoleGuard, UserPayload } from 'src/utils';
 import { User } from 'src/utils/decorators';
-import { GetGoogleUserReqDto } from './common/query';
+import { GetGoogleUserQueryDto } from './common/query';
 
 @ApiTags('users')
 @Controller('users')
@@ -180,7 +180,7 @@ export class UsersController {
   }
 
   @Get('callback')
-  async getGoogleUser(@Query() data: GetGoogleUserReqDto): Promise<BaseGetGoogleUserResDto> {
+  async getGoogleUser(@Query() data: GetGoogleUserQueryDto): Promise<BaseGetGoogleUserResDto> {
     console.log("Data", data);
     const result = await this.usersService.getGoogleUser(data);
     console.log("result", result);

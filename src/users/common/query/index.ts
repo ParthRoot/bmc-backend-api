@@ -1,1 +1,1 @@
-export * from './get.googleuser.req.dto';
+export * from './get.googleuser.query.dto';

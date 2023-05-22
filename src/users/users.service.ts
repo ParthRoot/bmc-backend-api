@@ -38,7 +38,7 @@ const querystring = require('querystring');
 
 import { google } from 'googleapis';
 import axios from 'axios';
-import { GetGoogleUserReqDto } from './common/query';
+import { GetGoogleUserQueryDto } from './common/query';
 
 const moment = require('moment');
 
@@ -518,10 +518,10 @@ export class UsersService {
   }
 
 
-  getGoogleAuthURL() {
-    const rootUrl = process.env.ROOT_URL;
-    const redirectUrl = process.env.REDIRECT_URL;
-    const clientId = process.env.CLIENT_ID;
+  async getGoogleAuthURL() {
+    const rootUrl = getEnv('ROOT_URL');
+    const redirectUrl = getEnv('REDIRECT_URL');
+    const clientId = getEnv('CLIENT_ID');
 
     const options = {
       redirect_uri: redirectUrl,
@@ -539,9 +539,9 @@ export class UsersService {
   }
 
   oauth2Client = new google.auth.OAuth2(
-    process.env.CLIENT_ID,
-    process.env.SECRET,
-    process.env.REDIRECT_URL
+    getEnv('CLIENT_ID'),
+    getEnv('SECRET'),
+    getEnv('REDIRECT_URL'),
   );
 
   /**

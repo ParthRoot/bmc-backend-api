@@ -18,7 +18,7 @@ export class UserEntity {
 
     @Index('IDX_UQ_social_id', { unique: true })
     @Column({ type: 'varchar', nullable: true })
-    social_id!: string;
+    social_id!: string | null;
 
     @Index('IDX_UQ_user_email', { unique: true })
     @Column({ type: 'varchar', length: 300, nullable: true })
