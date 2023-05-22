@@ -8,5 +8,7 @@ export const message = {
   userProfileNotExist: 'user not exist',
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
-  listTemplate: 'list template successfully'
+  listTemplate: 'list template successfully',
+  getGoogleUser: 'getting google user successfully',
+  getGoogleUrl: 'getting google url successfully'
 };

@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { SaveTemplateRepository, TemplateRepository } from 'src/db/repository';
 import { RestoreTemplateReqDto } from './common/query';
+import { UserPayload } from 'src/utils';
 
 @Injectable()
 export class TemplateService {
@@ -31,16 +32,14 @@ export class TemplateService {
   }
 
   /**
-   * restore the template version
+   * restore the template 
    * @param user 
-   * @param template_id 
+   * @param template_id version
    * @param versiond_id 
    * @returns template details
    */
-  async restoreTemplate(user, data: RestoreTemplateReqDto) {
+  async restoreTemplate(user: UserPayload, data: RestoreTemplateReqDto) {
     try {
-      await this.changeTempVersion(user, data.template_id);
-
       const restTemplateVersion = await this.saveTemplateRepository.findOne({
         where: {
           id: data.version_id,
@@ -52,6 +51,8 @@ export class TemplateService {
       if (!restTemplateVersion) {
         throw new Error('Template version not found');
       }
+
+      await this.changeTempVersion(user, data.template_id);
 
       restTemplateVersion.is_current_version = true;
       await this.saveTemplateRepository.save(restTemplateVersion);
@@ -68,7 +69,7 @@ export class TemplateService {
    * @param template_id
    *  
    */
-  private async changeTempVersion(user, template_id: string) {
+  private async changeTempVersion(user: UserPayload, template_id: string) {
     try {
       const currentVersion = await this.saveTemplateRepository.findOne({
         where: {
@@ -82,6 +83,7 @@ export class TemplateService {
         currentVersion.is_current_version = false;
         await this.saveTemplateRepository.save(currentVersion);
       }
+
     } catch (err) {
       throw err;
     }
