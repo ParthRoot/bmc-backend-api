@@ -6,7 +6,7 @@ import {
   ApiTags,
   ApiOkResponse,
 } from '@nestjs/swagger';
-import { BaseSaveTemplateResDto } from './common/dto/res';
+import { BaseGetSaveTemplateResDto, BaseSaveTemplateResDto } from './common/dto/res';
 import { SaveTemplateReqDto } from './common/dto/req';
 import { message } from 'src/utils/message';
 import { AuthGuard, UserPayload } from 'src/utils';
@@ -33,18 +33,20 @@ export class TemplateController {
     return new BaseSaveTemplateResDto(message.templateSave, result);
   }
 
-  // @Post('getsavetemplate')
-  // @ApiOperation({
-  //   summary: 'User get save template',
-  //   description: 'get save templete.',
-  // })
-  // @ApiResponse({
-  //   status: 201,
-  //   description: 'User get template',
-  //   type: BaseSaveTemplateResDto,
-  // })
-  // async getsaveTemplate(): Promise<BaseSaveTemplateResDto> {
-  //   const result = await this.templateService.getsaveTemplate();
-  //   return new BaseSaveTemplateResDto(message.getSavetemplate,result);
-  // }
+  @Get('getsavetemplate')
+  @UseGuards(AuthGuard)
+  @ApiOperation({
+    summary: 'User get save template',
+    description: 'get save templete.',
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'User get template',
+    type: BaseGetSaveTemplateResDto,
+  })
+  async getsaveTemplate(): Promise<BaseSaveTemplateResDto> {
+    const result = await this.templateService.getsaveTemplate();
+    return new BaseSaveTemplateResDto(message.getSavetemplate,result);
+  }
+  
 }

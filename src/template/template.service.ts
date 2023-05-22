@@ -52,5 +52,29 @@ export class TemplateService {
             throw err;
           }
         }
+
+        /**
+         * it will return save templates 
+         * @param id user id
+         * @returns get all save template
+         */
+        async getsaveTemplate(id?: string){
+          try{
+            const template = await this.saveTemplateRepository.find({
+              where: {
+                is_deleted: false,
+                id
+              }
+            });
+            if (template.length === 0) {
+              throw new Error(`Template does not exist`);
+            }
+            return template;
+          }catch(err){
+            throw err;
+          }
+        }
+
+        
         
 }
