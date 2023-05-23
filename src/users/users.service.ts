@@ -81,7 +81,7 @@ export class UsersService {
    * @returns UserEntity
    */
   private async assertUserAvailableViaEmail(email: string) {
-    const user = await this.userRepository.findOne({
+    const user = await this.userRepository.findOne({  
       where: {
         email,
       },
