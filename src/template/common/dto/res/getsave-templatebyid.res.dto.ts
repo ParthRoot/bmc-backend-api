@@ -1,13 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { SaveTemplateEntity } from 'src/db/entity/saveTemplate.entity';
 
-export class GetSaveTemplateResDto {
-  template: SaveTemplateData[];
-  constructor(saveTemplateData: SaveTemplateEntity[]) {
-    this.template = saveTemplateData.map((item) => new SaveTemplateData(item));
-  };
-}
-export class SaveTemplateData {
+export class GetSaveTemplateByIdResDto {
   @ApiProperty({
     description: 'template id',
     example: '123456789',
@@ -15,22 +8,6 @@ export class SaveTemplateData {
     type: String,
   })
   template_id: string;
-
-  @ApiProperty({
-    description: 'User name',
-    example: 'Raj',
-    required: true,
-    type: String,
-  })
-  name: string;
-
-  @ApiProperty({
-    description: 'User id',
-    example: 'userId',
-    required: true,
-    type: String,
-  })
-  id: string;
 
   @ApiProperty({
     description: 'Value html',
@@ -69,8 +46,7 @@ export class SaveTemplateData {
     this.created_at = data.created_at;
     this.updated_at = data.updated_at;
     this.is_current_version = data.is_current_version;
-    this.name = data.user.name;
-    this.id = data.user.id;
+    this.value = data.value;
   }
 
 }

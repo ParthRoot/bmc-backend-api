@@ -8,7 +8,7 @@ export const message = {
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
   templateSave: 'template saved',
-  getSavetemplate: 'version',
+  getSaveTemplate: 'version',
   deleteSaveTemplate: 'template deleted successfully',
   getGoogleUser: 'getting google user successfully',
   getGoogleUrl: 'getting google url successfully'

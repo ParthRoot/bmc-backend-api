@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
-import { SaveTemplateRepository } from 'src/db/repository';
-import { SaveTemplateReqDto } from './common/dto/req';
 import { SaveTemplateEntity } from 'src/db/entity/saveTemplate.entity';
+import { SaveTemplateRepository } from 'src/db/repository';
+import { UserPayload } from 'src/utils';
 import { Not } from 'typeorm';
 @Injectable()
 export class TemplateService {
@@ -15,7 +15,7 @@ export class TemplateService {
          * @returns template value
          */
         
-        private async createTemplate(payload, user, templateId) {
+        private async createTemplate(payload, user, templateId){
           const template = await this.saveTemplateRepository.create({
             value: payload.value,
             user,
@@ -33,7 +33,7 @@ export class TemplateService {
         * @param user user id take from payload
         * @param template_id take template id 
         */
-        async saveTemplate(saveTemplate, user, template_id) {
+        async saveTemplate(saveTemplate, user, template_id): Promise<SaveTemplateEntity> {
           try {
             const saveTemp = await this.saveTemplateRepository.findOne({
               where: {
@@ -42,13 +42,14 @@ export class TemplateService {
                 template: { id: template_id }
               }
             });
-        
-            if (saveTemp) {
+
+            if (!saveTemp) {
+              throw new Error('template not saved')
+            }
               saveTemp.is_current_version = false;
               await this.saveTemplateRepository.save(saveTemp);
-            }
         
-            await this.createTemplate(saveTemplate, user, template_id);
+            return await this.createTemplate(saveTemplate, user, template_id);
           } catch (err) {
             throw err;
           }
@@ -59,12 +60,19 @@ export class TemplateService {
          * @param id user id
          * @returns get all save template
          */
-        async getsaveTemplate(id?: string){
+        async getsaveTemplate(user:UserPayload){
           try{
             const template = await this.saveTemplateRepository.find({
+              relations:{
+                user: true
+              },
               where: {
-                is_deleted: false
-              }
+                is_deleted: false,
+                user:{
+                  id: user.id
+                }
+              },
+
             });
             if (template.length === 0) {
               throw new Error(`Template does not exist`);
@@ -74,6 +82,29 @@ export class TemplateService {
             throw err;
           }
         }
+        
+        /**
+         * it will return template value
+         * @param id version id 
+         * @returns template value
+         */
+        async getsaveTemplateById(id: string){
+          try{
+            const template = await this.saveTemplateRepository.findOne({
+              where: {
+                is_deleted: false,
+                id
+              }
+            });
+            if (!template) {
+              throw new Error(`Template does not exist`);
+            }
+            return template;
+          }catch(err){
+            throw err;
+          }
+        }
+
 
         /**
          * it will delete saveTemplate by id
