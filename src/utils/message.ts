@@ -1,6 +1,5 @@
 export const message = {
-  userSignUp:
-    'User has successfully signup & Email verification link send successfully',
+  userSignUp: 'User has successfully signup & Email verification link send successfully',
   resendEmailVerification: 'Email hans been successfully send',
   loginUser: 'User Log in Successfully!!',
   verifyEmail: 'Email has been Verify Successfully',
@@ -8,6 +7,9 @@ export const message = {
   userProfileNotExist: 'user not exist',
   forgetPassword: 'please check your mail',
   resetPassword: 'reset password successfully',
+  templateSave: 'template saved',
+  getSaveTemplate: 'version',
+  deleteSaveTemplate: 'template deleted successfully',
   getGoogleUser: 'getting google user successfully',
   getGoogleUrl: 'getting google url successfully'
 };
