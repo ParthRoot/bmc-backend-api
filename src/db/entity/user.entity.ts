@@ -8,8 +8,9 @@ import {
     UpdateDateColumn,
     DeleteDateColumn,
 } from 'typeorm';
-import { RoleEntity } from './index';
+import { RoleEntity, TemplateEntity } from './index';
 import { TokenEntity } from './token.entity';
+import { SaveTemplateEntity } from './saveTemplate.entity';
 
 @Entity('users')
 export class UserEntity {
@@ -37,6 +38,11 @@ export class UserEntity {
         cascade: true
     })
     role!: RoleEntity[];
+
+    @OneToMany(() => SaveTemplateEntity, (save_template) => save_template.user, {
+        cascade: true
+    })
+    save_template!: SaveTemplateEntity[];
 
     @OneToMany(() => TokenEntity, (token) => token.user, {
         cascade: true
