@@ -12,7 +12,7 @@ import { RestoreTemplateReqDto } from './common/query';
 export class TemplateController {
   constructor(private readonly templateService: TemplateService) { };
 
-  @Get('listTemplate')
+  @Get('list')
   @ApiOperation({
     summary: 'List Template',
     description: 'List Template',
@@ -28,7 +28,7 @@ export class TemplateController {
   }
 
 
-  @Get('getTemplateById/:id')
+  @Get(':id')
   @ApiOperation({
     summary: 'Get Template by ID',
     description: 'Retrieve template details by ID',
@@ -43,7 +43,7 @@ export class TemplateController {
     return new BaseListTemplateResDto(message.listTemplate, result);
   }
 
-  @Patch('restoreTemplate')
+  @Patch('restore-template')
   @UseGuards(AuthGuard)
   @ApiOperation({
     summary: 'Restore Template by ID',

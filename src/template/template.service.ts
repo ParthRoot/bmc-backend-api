@@ -2,6 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { SaveTemplateRepository, TemplateRepository } from 'src/db/repository';
 import { RestoreTemplateReqDto } from './common/query';
 import { UserPayload } from 'src/utils';
+import { SaveTemplateEntity } from 'src/db/entity/saveTemplate.entity';
+import { TemplateEntity } from 'src/db/entity';
 
 @Injectable()
 export class TemplateService {
@@ -12,7 +14,7 @@ export class TemplateService {
    * @param id string ?optional
    * @returns list template details
    */
-  async listTemplate(id?: string) {
+  async listTemplate(id?: string): Promise<TemplateEntity[]> {
     try {
       const template = await this.templateRepository.find({
         where: {
@@ -38,18 +40,20 @@ export class TemplateService {
    * @param versiond_id 
    * @returns template details
    */
-  async restoreTemplate(user: UserPayload, data: RestoreTemplateReqDto) {
+  async restoreTemplate(user: UserPayload, data: RestoreTemplateReqDto): Promise<SaveTemplateEntity> {
     try {
       const restTemplateVersion = await this.saveTemplateRepository.findOne({
         where: {
           id: data.version_id,
-          is_current_version: false,
-          user: { id: user.id }
         }
       });
 
       if (!restTemplateVersion) {
-        throw new Error('Template version not found');
+        throw new Error('Template not found');
+      }
+
+      if (restTemplateVersion.is_current_version === true) {
+        throw new Error('This is already current version');
       }
 
       await this.changeTempVersion(user, data.template_id);
@@ -79,13 +83,15 @@ export class TemplateService {
         },
       });
 
-      if (currentVersion) {
-        currentVersion.is_current_version = false;
-        await this.saveTemplateRepository.save(currentVersion);
+      if (!currentVersion) {
+        throw new Error();
       }
 
+      currentVersion.is_current_version = false;
+      await this.saveTemplateRepository.save(currentVersion);
+
     } catch (err) {
-      throw err;
+      console.log(`For User: ${user.id} and Template: ${template_id} not found`);
     }
   }
 }
